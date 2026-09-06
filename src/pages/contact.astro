@@ -1,0 +1,111 @@
+---
+import Base from "../layouts/Base.astro";
+import { site } from "../data/site";
+---
+
+<Base
+  title="Contact"
+  description="Get in touch about internships, graduate roles or freelance work."
+>
+  <section class="contact container">
+    <h1 class="contact__title">Contact</h1>
+
+    <p class="contact__lead measure">
+      The fastest way to reach me is email. I read everything and reply to
+      anything that is not a template.
+    </p>
+
+    <p class="contact__mail">
+      <a class="wipe" href={`mailto:${site.email}`}>{site.email}</a>
+    </p>
+
+    <dl class="contact__list">
+      <div>
+        <dt class="note">Phone</dt>
+        <dd>{site.phone}</dd>
+      </div>
+      <div>
+        <dt class="note">GitHub</dt>
+        <dd><a class="wipe" href={site.socials.github}>sulaiman-shariff</a></dd>
+      </div>
+      <div>
+        <dt class="note">LinkedIn</dt>
+        <dd><a class="wipe" href={site.socials.linkedin}>sulaiman-abdulla-shariff</a></dd>
+      </div>
+      <div>
+        <dt class="note">Based in</dt>
+        <dd>{site.location}</dd>
+      </div>
+    </dl>
+
+    <div class="contact__note">
+      <h2 class="contact__h2">What I am looking for</h2>
+      <p class="measure">
+        Software engineering internships and graduate roles starting 2027, and
+        freelance work in the meantime. I am most useful on AI systems that have to
+        survive contact with real users, and on the backends and infrastructure
+        underneath them.
+      </p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .contact {
+    padding-block: clamp(3rem, 2rem + 4vw, 5rem) 0;
+  }
+
+  .contact__title {
+    font-size: var(--step-4);
+  }
+
+  .contact__lead {
+    margin-top: 1.25rem;
+    color: var(--ink-muted);
+  }
+
+  .contact__mail {
+    margin-top: 2rem;
+  }
+
+  .contact__mail a {
+    font-size: var(--step-3);
+    font-weight: 560;
+    letter-spacing: -0.02em;
+  }
+
+  .contact__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 1.25rem 2rem;
+    margin: 2.5rem 0 0;
+    padding-block: 1.5rem;
+    border-block: 1px solid var(--line);
+  }
+
+  .contact__list dt {
+    margin-bottom: 0.2rem;
+  }
+
+  .contact__list dd {
+    margin: 0;
+    font-size: var(--step--1);
+  }
+
+  .contact__list a {
+    color: var(--accent-ink);
+  }
+
+  .contact__note {
+    margin-top: 2.5rem;
+  }
+
+  .contact__h2 {
+    font-size: var(--step-2);
+  }
+
+  .contact__note p {
+    margin-top: 0.9rem;
+    color: var(--ink-muted);
+  }
+</style>

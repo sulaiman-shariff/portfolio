@@ -1,0 +1,100 @@
+---
+title: Linkubit
+tagline: One inbox for every channel a customer might message you on, with an agent that answers and knows when to stop.
+summary: >-
+  A multi-tenant revenue platform unifying WhatsApp, Instagram, Messenger and
+  email into a single customer graph, with a LangGraph agent whose safety rules
+  live in code rather than in a prompt.
+role: Founder and engineer
+context: personal
+dates:
+  start: 2026-08-01
+  label: Aug 2026 — present
+stack: [FastAPI, AWS Lambda, PostgreSQL, LangGraph, Gemini, Terraform, Next.js]
+accent:
+  base: "#CF7015"
+  onAccent: light
+hero:
+  src: ../../assets/work/linkubit/inbox.png
+  alt: The Linkubit inbox, showing a WhatsApp conversation with an agent reply, a deal-health panel and a qualification checklist.
+  caption: >-
+    The inbox running in demo mode. The agent has answered a freight enquiry and
+    handed off to a human; the right-hand panel tracks what the conversation has
+    established and what is still unknown.
+headline:
+  value: "1,300+"
+  label: end-to-end scenarios against real PostgreSQL
+links:
+  repo: https://github.com/sulaiman-shariff/Linkubit
+status: published
+featured: false
+order: 30
+---
+
+Most businesses I know sell through conversations, and those conversations are
+scattered. A customer messages on WhatsApp, follows up by email, then replies to
+an Instagram ad, and to the business those are three strangers. Linkubit is my
+attempt at fixing that: one customer graph underneath every channel, so a person
+stays one person no matter where they arrive.
+
+## The part that was harder than the agent
+
+I expected the interesting problem to be the AI. It wasn't. The hard part was
+tenancy.
+
+In a system where one company's messages must never appear in another's inbox,
+route-level permission checks are the wrong place to enforce it. Every new
+endpoint is another chance to forget. So isolation lives in the database:
+row-level security is enabled **and forced** on every tenant-scoped table, and a
+test derived from the live schema fails the build when a new table appears
+without a policy.
+
+<Stats items={[
+  { value: "34", label: "Alembic migrations", note: "every tenant table policy-checked" },
+  { value: "1,300+", label: "end-to-end scenarios", note: "run against real PostgreSQL, not mocks" },
+  { value: "8", label: "Terraform modules", note: "one estate, no console clicking" }
+]} />
+
+That test caught two defects I would never have found by reading code. The first:
+a superuser bypasses row-level security even when it is FORCEd, so the policy
+looked correct in schema inspection and did nothing in practice. The second was
+worse and subtler. `current_setting` returns an empty string rather than NULL on
+a recycled connection, so a pooled connection that had lost its tenant context
+did not fail closed the way I assumed it would. It silently matched nothing,
+which looks identical to "this tenant has no data" until the day it doesn't.
+
+## Safety rules belong in code
+
+The agent is a small LangGraph loop over Gemini: load context, run a ReAct loop
+with seven tools, persist and reply. Seven tools, not seventy — the reference
+codebase I started from had a single 8,810-line tools file, and I wanted each
+tool to map to one module I could reason about.
+
+The design decision I would defend hardest is that none of its guardrails are in
+the prompt. There is a gate before any tool runs, a `can_send` check on every
+outbound message that tests consent, suppression, domain verification and pause
+state, and a verifier after generation that refuses any reply claiming to be
+human. A prompt that says "never claim to be a person" is a suggestion. A
+function that inspects the generated text and refuses to send is a rule.
+
+<Figure
+  src={import("../../assets/work/linkubit/pipeline.png")}
+  alt="The Linkubit pipeline board with opportunities grouped by stage."
+  caption="Pipeline stages with value and age. Deals that have gone quiet are marked stale rather than quietly sinking down a list."
+/>
+
+## What I would do differently
+
+I built the console before I had anything real flowing through it, which meant I
+designed screens for data shapes that later turned out to be wrong. The inbox
+survived that; the campaign screens were rebuilt twice.
+
+<Figure
+  src={import("../../assets/work/linkubit/analytics.png")}
+  alt="The analytics screen showing spend, leads, cost per lead and delivery metrics with trend charts."
+  caption="Attribution is computed over touchpoints, but closed revenue is frozen at the moment a deal closes — changing the attribution model never rewrites history."
+/>
+
+Linkubit is deployed to staging. It is not in production and I am not going to
+describe it as though it were: SES production access and Meta app review are both
+still outstanding, and those are calendar problems rather than code problems.

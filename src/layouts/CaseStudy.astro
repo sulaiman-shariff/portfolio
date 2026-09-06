@@ -1,0 +1,228 @@
+---
+import { Image } from "astro:assets";
+import Base from "./Base.astro";
+import { dateLabel, accentStyle, type Work } from "../lib/work";
+
+interface Props {
+  entry: Work;
+  next?: Work;
+}
+
+const { entry, next } = Astro.props;
+const d = entry.data;
+---
+
+<Base title={d.title} description={d.summary} themeColor={d.accent.base}>
+  <article class="case accent-scope" style={accentStyle(d)}>
+    <header class="case__head container">
+      <p class="case__context note">{d.context}</p>
+      <h1 class="case__title">{d.title}</h1>
+      <p class="case__tagline">{d.tagline}</p>
+
+      <dl class="case__meta">
+        <div>
+          <dt class="note">Role</dt>
+          <dd>{d.role}{d.org && <span class="case__org">, {d.org}</span>}</dd>
+        </div>
+        <div>
+          <dt class="note">When</dt>
+          <dd>{dateLabel(d)}</dd>
+        </div>
+        <div class="case__stackcell">
+          <dt class="note">Built with</dt>
+          <dd>{d.stack.join(", ")}</dd>
+        </div>
+        {
+          (d.links.live || d.links.repo) && (
+            <div>
+              <dt class="note">Links</dt>
+              <dd class="case__links">
+                {d.links.live && <a class="wipe" href={d.links.live}>Live site</a>}
+                {d.links.repo && <a class="wipe" href={d.links.repo}>Source</a>}
+              </dd>
+            </div>
+          )
+        }
+      </dl>
+    </header>
+
+    {
+      d.hero && (
+        <figure class="case__hero container">
+          <div class="case__heroframe">
+            <Image
+              src={d.hero.src}
+              alt={d.hero.alt}
+              widths={[720, 1080, 1600]}
+              sizes="(min-width: 72rem) 64rem, 100vw"
+              loading="eager"
+              fetchpriority="high"
+            />
+          </div>
+          {d.hero.caption && <figcaption class="note">{d.hero.caption}</figcaption>}
+        </figure>
+      )
+    }
+
+    <div class="case__body container">
+      <slot />
+    </div>
+  </article>
+
+  {
+    next && (
+      <nav class="nextup container" aria-label="Next project">
+        <a class="nextup__link" href={`/work/${next.id}`}>
+          <span class="note">Next</span>
+          <span class="nextup__title">{next.data.title}</span>
+          <span class="nextup__line">{next.data.tagline}</span>
+        </a>
+      </nav>
+    )
+  }
+</Base>
+
+<style>
+  .case__head {
+    padding-block: clamp(3rem, 2rem + 4vw, 5rem) 2rem;
+  }
+
+  .case__context {
+    text-transform: lowercase;
+  }
+
+  .case__title {
+    font-size: var(--step-5);
+    margin-top: 0.4rem;
+  }
+
+  .case__tagline {
+    margin-top: 1rem;
+    font-size: var(--step-1);
+    color: var(--ink-muted);
+    max-width: 46ch;
+  }
+
+  .case__meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+    gap: 1.25rem 2rem;
+    margin: 2.5rem 0 0;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .case__meta dt {
+    margin-bottom: 0.25rem;
+  }
+
+  .case__meta dd {
+    margin: 0;
+    font-size: var(--step--1);
+  }
+
+  .case__stackcell {
+    grid-column: span 2;
+  }
+
+  .case__org {
+    color: var(--ink-muted);
+  }
+
+  .case__links {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .case__links a {
+    color: var(--accent-ink);
+  }
+
+  .case__hero {
+    margin: 0 auto;
+  }
+
+  .case__heroframe {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--surface-2);
+  }
+
+  .case__hero figcaption {
+    margin-top: 0.7rem;
+    max-width: 60ch;
+  }
+
+  .case__body {
+    padding-block: clamp(2.5rem, 2rem + 3vw, 4rem);
+  }
+
+  /* Prose rhythm. Scoped here so MDX content needs no wrapper classes. */
+  .case__body :global(h2) {
+    font-size: var(--step-3);
+    margin-top: 3rem;
+    max-width: 24ch;
+  }
+
+  .case__body :global(h3) {
+    font-size: var(--step-1);
+    margin-top: 2.25rem;
+    max-width: 32ch;
+  }
+
+  .case__body :global(p),
+  .case__body :global(ul),
+  .case__body :global(ol) {
+    max-width: var(--measure);
+    margin-top: 1.1rem;
+  }
+
+  .case__body :global(li + li) {
+    margin-top: 0.5rem;
+  }
+
+  .case__body :global(a) {
+    color: var(--accent-ink);
+  }
+
+  .case__body :global(strong) {
+    font-weight: 560;
+  }
+
+  .case__body :global(blockquote) {
+    margin: 2rem 0;
+    padding-left: 1rem;
+    border-left: 2px solid var(--accent);
+    color: var(--ink-muted);
+    max-width: var(--measure);
+  }
+
+  .nextup {
+    padding-block: 2rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .nextup__link {
+    display: grid;
+    gap: 0.2rem;
+    text-decoration: none;
+    padding-block: 0.5rem;
+  }
+
+  .nextup__title {
+    font-size: var(--step-2);
+    font-weight: 560;
+    letter-spacing: -0.02em;
+  }
+
+  .nextup__line {
+    color: var(--ink-muted);
+    font-size: var(--step--1);
+    max-width: 52ch;
+  }
+
+  .nextup__link:hover .nextup__title {
+    color: var(--accent-ink);
+  }
+</style>

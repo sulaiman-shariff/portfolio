@@ -1,0 +1,90 @@
+---
+title: YantraLive
+tagline: A WhatsApp agent that handled heavy-machinery enquiries end to end, and knew when to hand a buyer to a person.
+summary: >-
+  A B2B marketplace agent for buyers and sellers of heavy machinery across
+  India, built on LangGraph and Gemini with tiered inventory matching, an
+  event-driven ingestion pipeline and a human-in-the-loop console.
+role: Software Engineering Intern
+org: YantraLive
+context: client work
+dates:
+  start: 2026-03-01
+  end: 2026-07-31
+stack: [LangGraph, Gemini, FastAPI, PostgreSQL, OpenSearch, SQS, ECS Fargate, Terraform]
+accent:
+  base: "#c98a12"
+  onAccent: dark
+hero:
+  src: ../../assets/work/yantralive/console.png
+  alt: The YantraLive operations console showing the intervention queue and a WhatsApp-style conversation list.
+  caption: >-
+    The operations console. Names and numbers here have been replaced with
+    synthetic ones — this is a live business and those were real buyers.
+headline:
+  value: "2,300+"
+  label: inbound leads served
+status: published
+featured: true
+order: 40
+---
+
+People who buy excavators do not want to install an app. They already use
+WhatsApp all day, so that is where the product had to live.
+
+I spent five months building the agent that handles those conversations: a
+LangGraph graph over Gemini with thirty-eight registered tools and conversation
+state checkpointed to PostgreSQL, so a worker restart never loses a buyer
+mid-negotiation.
+
+<Stats items={[
+  { value: "2,300+", label: "inbound leads served", note: "from 3,500+ registered buyers" },
+  { value: "38", label: "tools in the agent graph", note: "search, hold, quote, finance, escalate" },
+  { value: "43%", label: "cut in the client's AWS bill", note: "$626 to $356 a month" }
+]} />
+
+## Matching is not a vector search
+
+The obvious move for "match a buyer's requirement to inventory" is embeddings. It
+was the wrong tool here.
+
+Machinery enquiries are specific in a way that punishes fuzziness. A buyer asking
+for a particular model year and capacity does not want something semantically
+nearby, they want that machine or an honest "we don't have it". So matching runs
+in tiers: exact first, then relaxed on the fields that can safely flex, then
+fuzzy lexical search across PostgreSQL and OpenSearch. Vectors are used, but only
+for the agent's own memory, not for finding machines.
+
+One bug from that work stuck with me. Fuzzy model matching with an edit distance
+of one happily confused two genuinely different machine models, which in a
+marketplace is not a ranking problem, it is quoting the wrong equipment. The fix
+was a stricter search variant that drops model fuzziness to zero while leaving it
+on for the descriptive fields.
+
+## Knowing when to stop
+
+The agent is not trusted to close deals. A rule gate escalates a conversation to
+a ninety-three-endpoint operations console the moment it crosses into pricing
+approval, a hold on stock, or anything a person should own. Staff can take over a
+thread mid-conversation.
+
+Routing follows geography: RBAC scopes what each staff member sees down to their
+own region, enforced at the SQL row level across thirty-six Indian states and
+union territories rather than filtered in the application.
+
+## The unglamorous win
+
+Late in the engagement I audited the AWS bill against Cost Explorer and found
+four idle load balancers, twelve unattached public IPv4 addresses, duplicate
+CloudTrail trails, and provisioned concurrency on a Lambda that did not need it.
+Removing them took the monthly bill from $626 to $356.
+
+That is not the most interesting thing I built there, but it is the change the
+client noticed first, and it taught me that infrastructure nobody is watching
+quietly bills forever.
+
+## A note on this page
+
+Every name and phone number in the screenshot above was replaced with a synthetic
+equivalent before it was captured. YantraLive is a real business with real
+customers, and none of them agreed to appear in my portfolio.

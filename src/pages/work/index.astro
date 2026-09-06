@@ -1,0 +1,159 @@
+---
+import Base from "../../layouts/Base.astro";
+import { publishedWork, dateLabel, accentStyle } from "../../lib/work";
+
+const entries = await publishedWork();
+---
+
+<Base
+  title="Work"
+  description="Ten projects: a brain-computer interface, AI agents in production, and the platforms underneath them."
+>
+  <section class="index container">
+    <header class="index__head">
+      <h1 class="index__title">Work</h1>
+      <p class="index__intro measure">
+        Ten projects. Some shipped for companies, some are mine, one has electrodes.
+        Each page says what I built, what it cost me to learn, and what I would do
+        differently.
+      </p>
+    </header>
+
+    <ol class="ledger">
+      {
+        entries.map((e) => (
+          <li class="ledger__row row-hover accent-scope" style={accentStyle(e.data)}>
+            <a href={`/work/${e.id}`} class="ledger__link grid-12">
+              <span class="ledger__bar" aria-hidden="true" />
+              <span class="ledger__kind note">{e.data.context}</span>
+              <h2 class="ledger__title">{e.data.title}</h2>
+              <p class="ledger__line">{e.data.tagline}</p>
+              {e.data.headline ? (
+                <p class="ledger__stat">
+                  <span class="ledger__value data">
+                    {e.data.headline.value}
+                    {e.data.headline.unit && (
+                      <span class="ledger__unit">{e.data.headline.unit}</span>
+                    )}
+                  </span>
+                  <span class="ledger__label note">{e.data.headline.label}</span>
+                </p>
+              ) : (
+                <p class="ledger__stat">
+                  <span class="ledger__label note">{dateLabel(e.data)}</span>
+                </p>
+              )}
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+</Base>
+
+<style>
+  .index {
+    padding-block: clamp(3rem, 2rem + 4vw, 5rem) 0;
+  }
+
+  .index__head {
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--ink);
+  }
+
+  .index__title {
+    font-size: var(--step-4);
+  }
+
+  .index__intro {
+    margin-top: 1rem;
+    color: var(--ink-muted);
+  }
+
+  .ledger {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .ledger__row {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .ledger__link {
+    position: relative;
+    text-decoration: none;
+    padding: 1.6rem 0 1.6rem 1.25rem;
+    row-gap: 0.5rem;
+    align-items: baseline;
+  }
+
+  .ledger__bar {
+    position: absolute;
+    left: 0;
+    top: 1.6rem;
+    bottom: 1.6rem;
+    width: 3px;
+    background: var(--accent);
+  }
+
+  .ledger__kind {
+    grid-column: 1 / span 12;
+    text-transform: lowercase;
+  }
+
+  .ledger__title {
+    grid-column: 1 / span 12;
+    font-size: var(--step-3);
+  }
+
+  .ledger__line {
+    grid-column: 1 / span 12;
+    color: var(--ink-muted);
+    max-width: 56ch;
+  }
+
+  .ledger__stat {
+    grid-column: 1 / span 12;
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-top: 0.4rem;
+  }
+
+  .ledger__value {
+    font-size: var(--step-2);
+    color: var(--accent-ink);
+  }
+
+  .ledger__unit {
+    font-size: var(--step-0);
+    margin-left: 0.2em;
+  }
+
+  @media (min-width: 52rem) {
+    .ledger__link {
+      row-gap: 0.35rem;
+      padding-block: 1.9rem;
+    }
+    .ledger__kind {
+      grid-column: 1 / span 2;
+    }
+    .ledger__title {
+      grid-column: 3 / span 4;
+    }
+    .ledger__line {
+      grid-column: 7 / span 3;
+      grid-row: 1 / span 2;
+    }
+    .ledger__stat {
+      grid-column: 10 / span 3;
+      grid-row: 1 / span 2;
+      flex-direction: column;
+      align-items: flex-end;
+      text-align: right;
+      gap: 0.15rem;
+      margin-top: 0;
+    }
+  }
+</style>

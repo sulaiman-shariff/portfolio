@@ -1,0 +1,176 @@
+---
+import Base from "../layouts/Base.astro";
+import { site } from "../data/site";
+---
+
+<Base
+  title="About"
+  description="Final-year computer science student in Bangalore, building AI systems that run in production."
+>
+  <section class="about container grid-12">
+    <div class="about__body">
+      <h1 class="about__title">About</h1>
+
+      <p class="about__lead">
+        I am a final-year computer science student at Atria Institute of
+        Technology in Bangalore, graduating in June 2027.
+      </p>
+
+      <p>
+        I started building things properly in my second year, when a friend and I
+        set up a company and I ended up owning the backend by default. That turned
+        out to be the fastest way I have found to learn: there is nobody to escalate
+        to, so you read the documentation and then you read the source.
+      </p>
+
+      <p>
+        Since then I have worked on a regulated clinical-trial platform where every
+        document needed a tamper-evident history, a WhatsApp agent that handled
+        machinery enquiries for buyers across India, and a teaching platform whose
+        hardest requirement was knowing when to stay quiet. Alongside those I built
+        a brain-computer interface on my desk, which has taught me more about the
+        gap between a design document and a working system than anything else.
+      </p>
+
+      <h2>How I work</h2>
+
+      <p>
+        I measure things. Most of the numbers on this site came out of a log file
+        or a database rather than an estimate, and where I have not measured
+        something I say so. The brain-computer interface has a real 12.9 dB
+        response and no accuracy figure, because I have run one subject and that
+        is not enough to claim one.
+      </p>
+
+      <p>
+        I also try to put safety rules in code rather than in prompts. A prompt
+        that says "never do X" is a suggestion; a function that refuses is a rule.
+        That belief has shaped nearly every AI system on this site.
+      </p>
+
+      <h2>Outside the code</h2>
+
+      <p>
+        I run the Google Developer Groups chapter on campus, and was its AI/ML lead
+        before that. We ran Cepheus 2025, a hackathon with over four hundred
+        participants, and I have taken more than a hundred and twenty students
+        through Google Cloud Study Jams. Most of what I know about explaining
+        technical work to people who do not share my context, I learned standing in
+        front of a room.
+      </p>
+
+      <h2>Right now</h2>
+
+      <p>
+        I am looking for software engineering internships and graduate roles, and I
+        take freelance work. If something here is close to a problem you have,
+        <a class="wipe" href={`mailto:${site.email}`}>email me</a>.
+      </p>
+    </div>
+
+    <aside class="about__side">
+      <div class="about__portrait" aria-hidden="true">
+        <span class="note">Photo to come</span>
+      </div>
+      <dl class="about__facts">
+        <div>
+          <dt class="note">Based in</dt>
+          <dd>{site.location}</dd>
+        </div>
+        <div>
+          <dt class="note">Graduating</dt>
+          <dd>June 2027</dd>
+        </div>
+        <div>
+          <dt class="note">Elsewhere</dt>
+          <dd class="about__links">
+            <a class="wipe" href={site.socials.github}>GitHub</a>
+            <a class="wipe" href={site.socials.linkedin}>LinkedIn</a>
+          </dd>
+        </div>
+      </dl>
+    </aside>
+  </section>
+</Base>
+
+<style>
+  .about {
+    padding-block: clamp(3rem, 2rem + 4vw, 5rem) 0;
+    row-gap: 2.5rem;
+    align-items: start;
+  }
+
+  .about__body {
+    grid-column: 1 / span 12;
+  }
+
+  .about__side {
+    grid-column: 1 / span 12;
+  }
+
+  @media (min-width: 60rem) {
+    .about__body {
+      grid-column: 1 / span 7;
+    }
+    .about__side {
+      grid-column: 9 / span 4;
+      position: sticky;
+      top: 5.5rem;
+    }
+  }
+
+  .about__title {
+    font-size: var(--step-4);
+  }
+
+  .about__lead {
+    margin-top: 1.25rem;
+    font-size: var(--step-1);
+    color: var(--ink);
+    max-width: 46ch;
+  }
+
+  .about__body p {
+    max-width: var(--measure);
+    margin-top: 1.15rem;
+    color: var(--ink-muted);
+  }
+
+  .about__body h2 {
+    font-size: var(--step-2);
+    margin-top: 2.75rem;
+  }
+
+  .about__body a {
+    color: var(--accent-ink);
+  }
+
+  .about__portrait {
+    aspect-ratio: 4 / 5;
+    display: grid;
+    place-items: center;
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+  }
+
+  .about__facts {
+    margin: 1.5rem 0 0;
+    display: grid;
+    gap: 1rem;
+  }
+
+  .about__facts dt {
+    margin-bottom: 0.2rem;
+  }
+
+  .about__facts dd {
+    margin: 0;
+    font-size: var(--step--1);
+  }
+
+  .about__links {
+    display: flex;
+    gap: 1rem;
+  }
+</style>

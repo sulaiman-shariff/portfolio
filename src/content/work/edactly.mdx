@@ -1,0 +1,98 @@
+---
+title: Edactly
+tagline: A teaching platform for Indian schools whose tutor would rather say nothing than say something wrong.
+summary: >-
+  Lesson plans, question banks and revision notes generated from an
+  NCERT-aligned library, with a student tutor that abstains when a question
+  falls outside the syllabus, running on a serverless AWS estate defined
+  entirely in Terraform.
+role: Founding Engineer
+org: Cognivo OPC
+context: product
+dates:
+  start: 2024-11-01
+  label: Nov 2024 — present
+stack: [FastAPI, AWS Lambda, PostgreSQL, Cognito, Terraform, React, Gemini]
+accent:
+  base: "#e0680b"
+  onAccent: light
+hero:
+  src: ../../assets/work/edactly/landing.png
+  alt: The Edactly landing page, with a hand-drawn graph-paper background and mathematical annotations in the margins.
+  caption: >-
+    The landing page. The margin annotations are the actual working the product
+    is about — Euler's identity, Ohm's law, a right triangle — rather than stock
+    illustration.
+headline:
+  value: "7"
+  label: Lambdas on one Terraform estate
+links:
+  live: https://edactly.com
+status: published
+featured: true
+order: 20
+---
+
+Schools in India already had access to AI. What they did not have was AI a
+teacher could trust in front of a class. The failure mode that matters in a
+classroom is not a slow answer, it is a confident wrong one, delivered to thirty
+children who have no way to check it.
+
+So Edactly is built around a refusal. The student tutor retrieves against an
+NCERT-aligned library, and when a question falls outside the syllabus it says so
+rather than reaching for something plausible. There is a similarity floor below
+which it returns nothing at all.
+
+<Figure
+  src={import("../../assets/work/edactly/tutor.png")}
+  alt="The Edactly AI tutor mid-conversation beside a 3D avatar, answering a physics question with another question."
+  caption="Asked why a ball stops on grass, the tutor replies with a question rather than the answer, then confirms the student's guess and steers toward naming friction without supplying the word."
+/>
+
+That screenshot is a real exchange, not a mock-up. It shows the behaviour the
+whole product rests on: a tutor that teaches rather than answers. Handing over
+"friction" would have been trivially easy and completely useless.
+
+## Two products, one estate
+
+Edactly and ZoodleMe are separate products sharing a single AWS estate, and
+keeping that estate small was a deliberate constraint rather than an accident.
+
+<Stats items={[
+  { value: "7", label: "Lambdas", note: "API, extraction, and the generation workers" },
+  { value: "26", label: "Alembic migrations", note: "CI fails if models and migrations disagree" },
+  { value: "1,600", label: "users on ZoodleMe", note: "the sibling product on the same platform" }
+]} />
+
+The whole thing is Terraform — every Lambda, the API Gateway, RDS, Cognito, the
+buckets, the scheduler, and the OIDC roles CI assumes to deploy. Nothing was
+clicked into existence in a console, which means the estate can be read, reviewed
+and rebuilt.
+
+One decision I keep being asked about: the Lambdas sit outside any VPC. A NAT
+Gateway would have cost more per month than the database it was protecting, so
+instead the database enforces TLS, uses scram-sha-256, and has a forty-character
+generated password. That is a trade I would make again at this size and revisit
+the moment there is a second database worth isolating.
+
+## The gate I am most glad I built
+
+CI fails the build when the SQLAlchemy models and the Alembic migrations disagree.
+
+It sounds fussy. It has caught the specific, miserable class of bug where a model
+gains a column, nobody generates the migration, and everything works locally
+until the deploy — at which point the failure surfaces as a query error in
+production rather than a red build.
+
+<Figure
+  src={import("../../assets/work/edactly/library.png")}
+  alt="The Edactly content library showing Class 11 Physics with fourteen chapters and subtopic counts."
+  caption="The NCERT hierarchy the tutor retrieves against. Grounding is only as good as the corpus underneath it, so the library is structured by class, subject, chapter and subtopic rather than dumped in as text."
+/>
+
+## Where it actually stands
+
+The platform is live and the pilot with a first school has not started yet. I
+would rather say that plainly than imply a user base that does not exist. What
+exists is the product, the estate it runs on, and a tutor that has been taught
+when to keep quiet.

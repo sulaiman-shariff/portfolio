@@ -1,0 +1,115 @@
+---
+title: AURA
+tagline: A brain-computer interface for people who can move their eyes and almost nothing else.
+summary: >-
+  An SSVEP brain-computer interface built on an ESP32, decoding which flickering
+  target a user is looking at from two EEG channels, with a camera and
+  vision-model layer that turns the room into the interface.
+role: Final-year project
+context: research
+dates:
+  start: 2026-05-01
+  label: 2026 — present
+stack: [ESP32, C++, Python, Flask, React, Gemini]
+accent:
+  base: "#6d4fc7"
+  onAccent: light
+hero:
+  src: ../../assets/work/aura/bench.png
+  alt: The AURA bench interface showing the flickering stimulus disc and a results panel with SNR values and the decision breakdown.
+  caption: >-
+    The bench view. The disc flickers at a known frequency, the panel on the
+    right reports what the decoder saw on both channels and why it did or did
+    not commit to a selection.
+headline:
+  value: "12.9"
+  unit: dB
+  label: gaze-driven response on the bench
+status: published
+featured: true
+order: 10
+---
+
+If you can move your eyes and very little else, most assistive technology is out
+of reach. AURA is my attempt at an interface you drive by looking.
+
+It works on a real effect: when you look at something flickering at a fixed
+frequency, your visual cortex produces activity at that same frequency. Put
+several targets on screen at different rates, read the EEG, and whichever
+frequency is strongest tells you where the person is looking.
+
+## The decoder runs on the microcontroller
+
+Two BioAmp EXG Pill front ends feed the ESP32's own twelve-bit ADC. Sampling is
+250 Hz, analysis windows are four seconds, and the entire signal chain runs on
+the board: a one-pole high-pass, a 50 Hz notch for Indian mains, a low-pass set
+at 35 rather than 30 specifically so the second harmonic of a 15 Hz target
+survives.
+
+Detection is a Goertzel filter per candidate frequency rather than CCA or a
+filter bank. It is less sophisticated and it fits in the memory I had.
+
+The decision rule is the part I am most pleased with. A selection commits only
+when two conditions hold at once: the evidence at the cued frequency clears a
+threshold, **and** its margin over the best competing frequency clears a second
+one. Evidence alone is not enough, because on a noisy channel something is always
+winning.
+
+## What the bench actually showed
+
+I ran 206 trials across two evenings with electrodes on. 175 produced a complete
+record.
+
+<Stats items={[
+  { value: "12.9 dB", label: "swing at 15 Hz", note: "staring versus eyes covered, gaze alone" },
+  { value: "206", label: "trials recorded", note: "175 complete, one subject" },
+  { value: "38", label: "accepted selections", note: "after contact and artifact gating" }
+]} />
+
+The headline number is a 12.9 dB swing: +6.82 dB looking directly at a 15 Hz
+disc, −6.11 dB with eyes closed and a hand over them. That is a genuine SSVEP,
+produced by gaze and nothing else.
+
+The honest number is harder. Across staring trials the 15 Hz fundamental ranged
+from 0.11 to 6.82 dB against a 2.48 dB threshold, so it cleared roughly half the
+time at a four-second window. This is a working signal chain, not a working
+product, and I have not measured accuracy or information transfer rate on
+multiple subjects. I am not going to quote figures I have not earned.
+
+## Three things the bench taught me that theory did not
+
+**The alpha rhythm was cheating.** With a 10 Hz and 15 Hz pair, 10 Hz won twelve
+of fourteen trials regardless of what was on screen — including two trials where
+the stimulus was at 41 Hz and the low-pass had removed it entirely. The brain's
+idle rhythm sits at 10 Hz and it was drowning the stimulus. The fix was to move
+the whole command set off alpha, to 15, 17 and 19 Hz, and subtract a measured
+resting baseline per frequency.
+
+**Longer windows made it worse.** I assumed eight seconds would beat four by
+simple averaging. It did the opposite: evidence fell from a 0.11–6.82 dB range to
+−6.13 to +1.78 dB. Fixation drift and SSVEP adaptation beat the square-root
+averaging gain. Four seconds stayed.
+
+**Dry electrodes do not work here.** Without gel, occipital contact railed the
+amplifier between 0 and 4095 with hundreds of clipped samples per window. With
+gel and no other change, it settled to a peak-to-peak of 37–95 and zero clipping.
+
+## The layer on top
+
+A camera and a vision model look at the room, identify objects, and render a
+flickering tag anchored to each one. Selecting an object then produces a fresh
+set of candidate intents, which become the next set of targets. In practice it
+means the interface is generated from whatever is actually in front of the
+person, rather than a fixed menu.
+
+Bed and wheelchair actuation are displayed and logged only. Nothing physically
+moves, and I would rather say that than let a demo imply otherwise.
+
+## Status
+
+This is a final-year project with a patent filing in progress, so this page
+describes the system rather than the claim. What is built: the full signal chain,
+contact and artifact gating, guided calibration, the vision layer, the live
+session with permanent help and cancel targets, and the operator interface above.
+What is not: alerting that survives losing the network, which is the most serious
+limitation it currently has.

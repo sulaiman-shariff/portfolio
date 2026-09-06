@@ -2,42 +2,9 @@
 import Base from "../layouts/Base.astro";
 import PromptVideo from "../components/home/PromptVideo.astro";
 import { site } from "../data/site";
+import { featuredWork, accentStyle } from "../lib/work";
 
-// Home-page ledger. One row per featured project: research, product, client work.
-// Numbers are the verified ones from the résumé work; media slots arrive with
-// each case study in later phases.
-const featured = [
-  {
-    slug: "aura",
-    title: "AURA",
-    kind: "Research",
-    line: "A brain-computer interface for people who can move their eyes and almost nothing else. Built on my desk, decoded on an ESP32.",
-    value: "12.9",
-    unit: "dB",
-    label: "gaze-driven response on the bench",
-    accent: "#6d4fc7",
-  },
-  {
-    slug: "edactly",
-    title: "Edactly",
-    kind: "Product",
-    line: "A teaching platform for Indian schools. Its tutor would rather say nothing than say something wrong.",
-    value: "7",
-    unit: "",
-    label: "Lambdas on one Terraform estate",
-    accent: "#e0680b",
-  },
-  {
-    slug: "yantralive",
-    title: "YantraLive",
-    kind: "Client work",
-    line: "A WhatsApp agent that handled heavy-machinery enquiries end to end for buyers across India.",
-    value: "2,300",
-    unit: "",
-    label: "inbound leads served",
-    accent: "#c98a12",
-  },
-];
+const featured = await featuredWork();
 ---
 
 <Base>
@@ -74,20 +41,24 @@ const featured = [
 
     <ol class="ledger">
       {
-        featured.map((p) => (
-          <li class="ledger__row row-hover accent-scope" style={`--accent-base:${p.accent}`}>
-            <a href={`/work/${p.slug}`} class="ledger__link grid-12">
-              <span class="ledger__bar" aria-hidden="true"></span>
-              <span class="ledger__kind note">{p.kind}</span>
-              <h3 class="ledger__title">{p.title}</h3>
-              <p class="ledger__line">{p.line}</p>
-              <p class="ledger__stat">
-                <span class="ledger__value data">
-                  {p.value}
-                  {p.unit && <span class="ledger__unit">{p.unit}</span>}
-                </span>
-                <span class="ledger__label note">{p.label}</span>
-              </p>
+        featured.map((e) => (
+          <li class="ledger__row row-hover accent-scope" style={accentStyle(e.data)}>
+            <a href={`/work/${e.id}`} class="ledger__link grid-12">
+              <span class="ledger__bar" aria-hidden="true" />
+              <span class="ledger__kind note">{e.data.context}</span>
+              <h3 class="ledger__title">{e.data.title}</h3>
+              <p class="ledger__line">{e.data.tagline}</p>
+              {e.data.headline && (
+                <p class="ledger__stat">
+                  <span class="ledger__value data">
+                    {e.data.headline.value}
+                    {e.data.headline.unit && (
+                      <span class="ledger__unit">{e.data.headline.unit}</span>
+                    )}
+                  </span>
+                  <span class="ledger__label note">{e.data.headline.label}</span>
+                </p>
+              )}
             </a>
           </li>
         ))
@@ -244,10 +215,10 @@ const featured = [
       grid-column: 1 / span 2;
     }
     .ledger__title {
-      grid-column: 3 / span 3;
+      grid-column: 3 / span 4;
     }
     .ledger__line {
-      grid-column: 6 / span 4;
+      grid-column: 7 / span 3;
       grid-row: 1 / span 2;
     }
     .ledger__stat {

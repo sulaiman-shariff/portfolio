@@ -1,0 +1,258 @@
+---
+import Base from "../layouts/Base.astro";
+import { site } from "../data/site";
+
+/**
+ * The résumé, inline. Mirrors the LaTeX source in ../resume/ — the PDF is the
+ * canonical artefact and this page exists so the content is readable, linkable
+ * and indexable without downloading anything.
+ */
+const experience = [
+  {
+    org: "Cognivo OPC",
+    products: "ZoodleMe, Edactly",
+    role: "Founding Engineer",
+    note: "part-time, alongside full-time study",
+    when: "Nov 2024 — present",
+    bullets: [
+      "Built Edactly, a B2B teaching platform for Indian K–10 schools: teachers generate lesson plans, question banks and revision notes from an NCERT-aligned library, with a student AI tutor that returns nothing rather than a wrong answer off-syllabus.",
+      "Scaled the ZoodleMe backend to 1,600 users with LLM story generation, TTS narration and image pipelines, and multi-provider payments.",
+      "Ran both products on one serverless AWS platform — FastAPI on Lambda, RDS PostgreSQL 16, Cognito SSO — with all 7 Lambdas and the API Gateway in Terraform and OIDC deploys.",
+    ],
+  },
+  {
+    org: "Datatreasures",
+    role: "Full-Stack & AI Engineering Intern",
+    when: "Oct 2025 — Jun 2026",
+    bullets: [
+      "Built TMF Eye, a regulated Trial Master File platform where teams file, version and sign off clinical documents, with hash-chained audit events and AWS KMS e-signatures making every document's history tamper-evident and auditor-verifiable.",
+      "Architected a hierarchical RAG system over the TMF Reference Model that answers regulatory questions with cited artifacts, with quality tracked by an MRR and Recall@K harness.",
+      "Built a CRF OCR engine extracting clinical form data with Azure GPT vision, plus a content assistant letting tutoring-centre staff search 105 maths PDFs in natural language.",
+    ],
+  },
+  {
+    org: "YantraLive",
+    role: "Software Engineering Intern",
+    when: "Mar 2026 — Jul 2026",
+    bullets: [
+      "Built a WhatsApp-native B2B machinery marketplace agent on LangGraph and Gemini: a 6-node graph, 38 tools, durable Postgres state, handling buyer enquiries end to end and escalating to a 93-endpoint console on rule-gate triggers.",
+      "Built tiered inventory matching (exact, relaxed, then fuzzy over Postgres and OpenSearch) behind an event-driven SQS to ECS Fargate pipeline autoscaled on queue backlog, serving 2,300+ inbound leads from 3,500+ buyers across 36 Indian states.",
+      "Cut the client's AWS spend 43% ($626 to $356 a month) by auditing Cost Explorer and removing redundant load balancers, public IPv4 addresses, duplicate CloudTrail trails and unused provisioned concurrency.",
+    ],
+  },
+];
+
+const skills = [
+  ["Languages", "Python, TypeScript, JavaScript, Java, C, SQL, HTML/CSS"],
+  ["AI and ML", "LangGraph, LlamaIndex, PyTorch, Hugging Face, RAG, Gemini and Vertex AI, Azure OpenAI, OpenCV"],
+  ["Cloud and DevOps", "AWS (Lambda, RDS, S3, SQS, ECS, Cognito, API Gateway, SSM), GCP, Azure, Terraform, Docker, GitHub Actions"],
+  ["Frameworks and data", "FastAPI, Django, React, Next.js, PostgreSQL and pgvector, DynamoDB, MongoDB, Pinecone, Qdrant, Redis"],
+];
+
+const awards = [
+  "1st place, CYPHER 2023 (Wellify-me)",
+  "2nd place, CYPHER 3.0 (ManimRAG)",
+  "2nd place, HACKNXS at MIT (Neolectra)",
+  "3rd place, SRISHTI VTU (TranslateAI)",
+  "1st Runner-up, TiE U Bangalore (ScrapSaver)",
+  "Honourable Mention, Harvard MUN 2022",
+];
+---
+
+<Base title="Résumé" description="Résumé of Sulaiman Abdulla Shariff — software engineer, Bangalore.">
+  <section class="cv container">
+    <header class="cv__head">
+      <div>
+        <h1 class="cv__title">Résumé</h1>
+        <p class="note">Last updated September 2026</p>
+      </div>
+      <a class="button" href="/files/sulaiman-shariff-resume.pdf" download>
+        Download PDF
+      </a>
+    </header>
+
+    <h2 class="cv__h2">Technical skills</h2>
+    <dl class="cv__skills">
+      {
+        skills.map(([k, v]) => (
+          <div>
+            <dt class="note">{k}</dt>
+            <dd>{v}</dd>
+          </div>
+        ))
+      }
+    </dl>
+
+    <h2 class="cv__h2">Education</h2>
+    <div class="cv__entry">
+      <div class="cv__entryhead">
+        <h3>Atria Institute of Technology</h3>
+        <span class="note">2023 — 2027</span>
+      </div>
+      <p class="note">B.E. in Computer Science and Engineering · CGPA 7.9 · Bangalore</p>
+    </div>
+
+    <h2 class="cv__h2">Experience</h2>
+    {
+      experience.map((job) => (
+        <div class="cv__entry">
+          <div class="cv__entryhead">
+            <h3>
+              {job.org}
+              {job.products && <span class="cv__products"> ({job.products})</span>}
+            </h3>
+            <span class="note">{job.when}</span>
+          </div>
+          <p class="cv__role note">
+            {job.role}
+            {job.note && <span> · {job.note}</span>}
+          </p>
+          <ul class="cv__bullets">
+            {job.bullets.map((b) => (
+              <li>{b}</li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
+
+    <h2 class="cv__h2">Leadership</h2>
+    <div class="cv__entry">
+      <div class="cv__entryhead">
+        <h3>Google Developer Groups on Campus, Atria</h3>
+        <span class="note">2024 — 2026</span>
+      </div>
+      <p class="cv__role note">Organizer (2025–26), AI/ML Lead (2024–25)</p>
+      <ul class="cv__bullets">
+        <li>
+          Organised and led several Build with AI campaigns and Google Cloud Study
+          Jams, helping 120+ students complete their study jams; as AI/ML Lead ran
+          Cepheus 2025, a 400+ participant hackathon.
+        </li>
+      </ul>
+    </div>
+
+    <h2 class="cv__h2">Honours and awards</h2>
+    <ul class="cv__awards">
+      {awards.map((a) => <li>{a}</li>)}
+    </ul>
+
+    <p class="cv__foot note">
+      Full detail on the projects behind these lines is in <a class="wipe" href="/work">the work</a>.
+      Questions to <a class="wipe" href={`mailto:${site.email}`}>{site.email}</a>.
+    </p>
+  </section>
+</Base>
+
+<style>
+  .cv {
+    padding-block: clamp(3rem, 2rem + 4vw, 5rem) 0;
+  }
+
+  .cv__head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: end;
+    justify-content: space-between;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--ink);
+  }
+
+  .cv__title {
+    font-size: var(--step-4);
+  }
+
+  .cv__h2 {
+    font-size: var(--step-2);
+    margin-top: 3rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .cv__skills {
+    display: grid;
+    gap: 1rem;
+    margin: 1.25rem 0 0;
+  }
+
+  .cv__skills dt {
+    margin-bottom: 0.15rem;
+  }
+
+  .cv__skills dd {
+    margin: 0;
+    font-size: var(--step--1);
+    max-width: 78ch;
+  }
+
+  .cv__entry {
+    margin-top: 1.75rem;
+  }
+
+  .cv__entryhead {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+
+  .cv__entryhead h3 {
+    font-size: var(--step-1);
+    font-weight: 560;
+    letter-spacing: -0.015em;
+  }
+
+  .cv__products {
+    color: var(--ink-muted);
+    font-weight: 400;
+  }
+
+  .cv__role {
+    margin-top: 0.15rem;
+  }
+
+  .cv__bullets {
+    margin: 0.75rem 0 0;
+    padding-left: 1.1rem;
+    max-width: var(--measure);
+  }
+
+  .cv__bullets li {
+    font-size: var(--step--1);
+    line-height: 1.55;
+  }
+
+  .cv__bullets li + li {
+    margin-top: 0.5rem;
+  }
+
+  .cv__awards {
+    margin: 1.25rem 0 0;
+    padding-left: 1.1rem;
+    max-width: var(--measure);
+  }
+
+  .cv__awards li {
+    font-size: var(--step--1);
+  }
+
+  .cv__awards li + li {
+    margin-top: 0.35rem;
+  }
+
+  .cv__foot {
+    margin-top: 3rem;
+  }
+
+  .cv__foot a {
+    color: var(--accent-ink);
+  }
+
+  @media print {
+    .button {
+      display: none;
+    }
+  }
+</style>
