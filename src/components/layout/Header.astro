@@ -1,0 +1,80 @@
+---
+import { site } from "../../data/site";
+import ThemeToggle from "./ThemeToggle.astro";
+
+const path = Astro.url.pathname;
+const isActive = (href: string) =>
+  href === "/" ? path === "/" : path.startsWith(href);
+---
+
+<header class="header">
+  <div class="container header__inner">
+    <a href="/" class="header__brand">{site.shortName}</a>
+
+    <nav class="header__nav" aria-label="Primary">
+      {
+        site.nav.map((item) => (
+          <a
+            href={item.href}
+            class:list={["header__link", { "is-active": isActive(item.href) }]}
+            aria-current={isActive(item.href) ? "page" : undefined}
+          >
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <ThemeToggle />
+  </div>
+</header>
+
+<style>
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: color-mix(in oklab, var(--surface) 88%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .header__inner {
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 3vw, 2.5rem);
+    min-height: 3.75rem;
+  }
+
+  .header__brand {
+    font-weight: 560;
+    letter-spacing: -0.015em;
+    text-decoration: none;
+    margin-inline-end: auto;
+  }
+
+  .header__nav {
+    display: flex;
+    gap: clamp(0.9rem, 2.2vw, 1.75rem);
+  }
+
+  .header__link {
+    font-size: var(--step--1);
+    color: var(--ink-muted);
+    text-decoration: none;
+    padding-block: 0.25rem;
+    border-bottom: 1px solid transparent;
+    transition:
+      color 0.2s ease,
+      border-color 0.2s ease;
+  }
+
+  .header__link:hover {
+    color: var(--ink);
+  }
+
+  .header__link.is-active {
+    color: var(--ink);
+    border-bottom-color: var(--ink);
+  }
+</style>

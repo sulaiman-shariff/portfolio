@@ -1,0 +1,297 @@
+---
+/**
+ * Evidence × margin scatter of every complete AURA bench trial.
+ *
+ * Rendered to static SVG at build time. x = margin over the best competitor,
+ * y = evidence at the cued frequency, both in dB. The decoder commits a
+ * selection only when BOTH clear their thresholds, so the upper-right region
+ * is where a trial has to land — the chart draws the decision rule itself.
+ *
+ * Filled dots: MATCH. Hollow: everything else, shaded by verdict.
+ */
+import { scaleLinear } from "d3-scale";
+import data from "../../data/aura-trials.json";
+
+interface Props {
+  /** Draw on load (hero) or render static (case study body). */
+  animate?: boolean;
+  id?: string;
+}
+
+const { animate = false, id = "evidence-scatter" } = Astro.props;
+
+const W = 760;
+const H = 480;
+const m = { top: 28, right: 26, bottom: 54, left: 58 };
+const iw = W - m.left - m.right;
+const ih = H - m.top - m.bottom;
+
+const trials = data.trials as Array<{
+  trial: number;
+  evidence: number;
+  margin: number;
+  result: string;
+}>;
+
+const thrE = data.thresholds.evidenceDb ?? 2.48;
+const thrM = data.thresholds.marginDb ?? 0.32;
+
+// The margin axis is clipped: a handful of trials sit far to the right (one at
+// 60 dB) and would squash everything else into a stripe. Clipped points are
+// drawn at the edge with a distinct marker and disclosed in the caption.
+const X_CAP = 14;
+const pad = 1.2;
+const xs = trials.map((t) => t.margin);
+const ys = trials.map((t) => t.evidence);
+const x = scaleLinear()
+  .domain([Math.floor(Math.min(...xs) - pad), X_CAP])
+  .range([0, iw]);
+const y = scaleLinear()
+  .domain([Math.floor(Math.min(...ys) - pad), Math.ceil(Math.max(...ys) + pad)])
+  .range([ih, 0])
+  .nice();
+
+const xTicks = x.ticks(6).filter((t) => t <= X_CAP);
+const yTicks = y.ticks(6);
+
+const clipped = trials.filter((t) => t.margin > X_CAP).length;
+const matches = trials.filter((t) => t.result === "MATCH").length;
+const inRegion = trials.filter((t) => t.evidence >= thrE && t.margin >= thrM).length;
+const total = trials.length;
+
+const px = (t: { margin: number }) => x(Math.min(t.margin, X_CAP));
+
+const fmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+
+// Commit region: margin ≥ thrM AND evidence ≥ thrE.
+const rx = x(thrM);
+const ry = y(thrE);
+
+const verdictClass = (r: string) => {
+  switch (r) {
+    case "MATCH":
+      return "dot dot--match";
+    case "LOW_CONFIDENCE":
+      return "dot dot--low";
+    case "NO_MATCH":
+      return "dot dot--no";
+    default:
+      return "dot dot--reject"; // electrode / artifact checks
+  }
+};
+---
+
+<svg
+  class:list={["scatter", { "scatter--animate": animate }]}
+  viewBox={`0 0 ${W} ${H}`}
+  role="img"
+  aria-labelledby={`${id}-title ${id}-desc`}
+>
+  <title id={`${id}-title`}>
+    Evidence against margin for {total} AURA bench trials
+  </title>
+  <desc id={`${id}-desc`}>
+    Scatter plot. Horizontal axis is margin over the best competing frequency in
+    decibels; vertical axis is evidence at the cued frequency in decibels. The
+    decoder commits only when margin is at least {fmt(thrM)} and evidence is at
+    least {fmt(thrE)}. {inRegion} of {total} trials landed in that region; {matches}
+    were accepted after the electrode-contact and artifact checks. {clipped} trials
+    with margin above {X_CAP} dB are drawn at the right edge.
+  </desc>
+
+  <g transform={`translate(${m.left} ${m.top})`}>
+    {/* Commit region */}
+    <rect
+      class:list={["region", { "draw-region": animate }]}
+      x={rx}
+      y={0}
+      width={Math.max(0, iw - rx)}
+      height={Math.max(0, ry)}
+    />
+
+    {/* Gridlines, light */}
+    {yTicks.map((t) => (
+      <line class="grid" x1={0} x2={iw} y1={y(t)} y2={y(t)} />
+    ))}
+    {xTicks.map((t) => (
+      <line class="grid" x1={x(t)} x2={x(t)} y1={0} y2={ih} />
+    ))}
+
+    {/* Zero lines, slightly stronger */}
+    {x.domain()[0] < 0 && x.domain()[1] > 0 && (
+      <line class="zero" x1={x(0)} x2={x(0)} y1={0} y2={ih} />
+    )}
+    {y.domain()[0] < 0 && y.domain()[1] > 0 && (
+      <line class="zero" x1={0} x2={iw} y1={y(0)} y2={y(0)} />
+    )}
+
+    {/* Threshold rules — the decision boundary */}
+    <line
+      class:list={["threshold", { "draw-line": animate }]}
+      pathLength="1"
+      x1={rx}
+      x2={rx}
+      y1={ih}
+      y2={0}
+    />
+    <line
+      class:list={["threshold", { "draw-line": animate }]}
+      pathLength="1"
+      x1={0}
+      x2={iw}
+      y1={ry}
+      y2={ry}
+    />
+
+    {/* Threshold labels */}
+    <text class="thr-label" x={rx + 6} y={ih - 8}>
+      margin ≥ {fmt(thrM)} dB
+    </text>
+    <text class="thr-label" x={6} y={ry - 7}>
+      evidence ≥ {fmt(thrE)} dB
+    </text>
+
+    {/* Trials, in recorded order so the replay is chronological */}
+    {trials.map((t, i) =>
+      t.margin > X_CAP ? (
+        /* Clipped: a small right-pointing triangle at the axis edge. */
+        <path
+          class:list={[verdictClass(t.result), "dot--clipped", { "draw-dot": animate }]}
+          style={animate ? `--i:${i}` : undefined}
+          d={`M ${px(t) - 4} ${y(t.evidence) - 4} L ${px(t) + 4} ${y(t.evidence)} L ${px(t) - 4} ${y(t.evidence) + 4} Z`}
+        >
+          <title>{`Trial ${t.trial}: margin ${t.margin} dB (beyond axis), evidence ${t.evidence} dB — ${t.result.replaceAll("_", " ").toLowerCase()}`}</title>
+        </path>
+      ) : (
+        <circle
+          class:list={[verdictClass(t.result), { "draw-dot": animate }]}
+          style={animate ? `--i:${i}` : undefined}
+          cx={px(t)}
+          cy={y(t.evidence)}
+          r={t.result === "MATCH" ? 4.6 : 3.6}
+        >
+          <title>{`Trial ${t.trial}: margin ${t.margin} dB, evidence ${t.evidence} dB — ${t.result.replaceAll("_", " ").toLowerCase()}`}</title>
+        </circle>
+      ),
+    )}
+
+    {/* Axes */}
+    <line class="axis" x1={0} x2={iw} y1={ih} y2={ih} />
+    <line class="axis" x1={0} x2={0} y1={0} y2={ih} />
+
+    {xTicks.map((t) => (
+      <text class="tick" x={x(t)} y={ih + 20} text-anchor="middle">
+        {fmt(t)}
+      </text>
+    ))}
+    {yTicks.map((t) => (
+      <text class="tick" x={-10} y={y(t) + 4} text-anchor="end">
+        {fmt(t)}
+      </text>
+    ))}
+
+    <text class="axis-label" x={iw} y={ih + 44} text-anchor="end">
+      margin over best competitor, dB {clipped > 0 && `(${clipped} beyond ${X_CAP} drawn at edge)`}
+    </text>
+    <text
+      class="axis-label"
+      transform={`translate(${-m.left + 14} 0) rotate(-90)`}
+      text-anchor="end"
+    >
+      evidence at cued frequency, dB
+    </text>
+  </g>
+</svg>
+
+<style>
+  .scatter {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    font-family: var(--font-mono);
+    font-feature-settings: "tnum" 1;
+  }
+
+  .region {
+    fill: var(--accent);
+    opacity: 0.08;
+  }
+
+  .grid {
+    stroke: var(--line);
+    stroke-width: 1;
+    stroke-dasharray: 2 4;
+  }
+
+  .zero {
+    stroke: var(--line-strong);
+    stroke-width: 1;
+  }
+
+  .axis {
+    stroke: var(--ink-muted);
+    stroke-width: 1.2;
+  }
+
+  .threshold {
+    stroke: var(--accent-ink);
+    stroke-width: 1.5;
+  }
+
+  .thr-label {
+    fill: var(--accent-ink);
+    font-size: 12px;
+  }
+
+  .tick {
+    fill: var(--ink-faint);
+    font-size: 11.5px;
+  }
+
+  .axis-label {
+    fill: var(--ink-muted);
+    font-size: 12px;
+    font-family: var(--font-sans);
+  }
+
+  .dot {
+    stroke-width: 1.3;
+    fill: transparent;
+  }
+
+  .dot--match {
+    fill: var(--accent);
+    stroke: var(--accent-ink);
+  }
+
+  .dot--low {
+    stroke: var(--ink-muted);
+    opacity: 0.85;
+  }
+
+  .dot--no {
+    stroke: var(--ink-faint);
+    opacity: 0.75;
+  }
+
+  .dot--reject {
+    stroke: var(--line-strong);
+    opacity: 0.55;
+  }
+
+  /* The viewBox is 760 wide. On a phone it renders at roughly half scale, so
+     text set for desktop lands around 5px. Inline SVG honours viewport media
+     queries, so the labels grow in viewBox units to stay legible. */
+  @media (max-width: 40rem) {
+    .tick,
+    .thr-label {
+      font-size: 19px;
+    }
+    .axis-label {
+      font-size: 18px;
+    }
+    .grid {
+      stroke-dasharray: 3 6;
+    }
+  }
+</style>

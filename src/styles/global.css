@@ -1,0 +1,197 @@
+@import "tailwindcss";
+@import "./tokens.css";
+@import "./motion.css";
+
+/* Dark mode is driven by an attribute we set ourselves, not by the media query,
+   so the toggle can override the OS preference. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* `@theme inline` compiles `bg-accent` to `background-color: var(--accent)`
+   rather than freezing the value at build time — which is what lets a single
+   inline `--accent-base` retint every utility beneath it. */
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-line: var(--accent-line);
+  --color-on-accent: var(--on-accent);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: var(--step-0);
+    font-weight: 400;
+    line-height: 1.55;
+    font-variation-settings: "opsz" 14;
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Display sizes: same family, larger optical size, heavier, tighter. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-sans);
+    font-variation-settings: "opsz" 96, "wdth" 92;
+    font-weight: 560;
+    line-height: 1.02;
+    letter-spacing: -0.028em;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  h4 {
+    font-weight: 560;
+    line-height: 1.2;
+    letter-spacing: -0.012em;
+    margin: 0;
+  }
+
+  p {
+    text-wrap: pretty;
+    margin: 0;
+  }
+
+  a {
+    color: inherit;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+    text-decoration-color: var(--line-strong);
+    transition: text-decoration-color 0.2s ease;
+  }
+
+  a:hover {
+    text-decoration-color: currentColor;
+  }
+
+  img,
+  video,
+  svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+  }
+
+  hr {
+    border: 0;
+    border-top: 1px solid var(--line);
+    margin: 0;
+  }
+
+  /* Numbers read as data, not prose. Used only for real values and code. */
+  .data,
+  code,
+  kbd {
+    font-family: var(--font-mono);
+    font-feature-settings: "tnum" 1;
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer components {
+  .container {
+    width: 100%;
+    max-width: var(--container);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  /* Twelve columns. The margin-note column lives at the right edge on wide
+     screens and drops beneath content on narrow ones. */
+  .grid-12 {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--col-gap);
+  }
+
+  .measure {
+    max-width: var(--measure);
+  }
+
+  /* A margin note: the source of a figure, a date, a caveat. Sentence case,
+     small, muted. Never all caps. */
+  .note {
+    font-size: var(--step--1);
+    color: var(--ink-muted);
+    line-height: 1.5;
+  }
+
+  .note .data {
+    color: var(--ink);
+  }
+
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+    padding: 0.75rem 1rem;
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  .skip-link:focus {
+    left: 0;
+  }
+
+  /* One button style. Solid, square-ish, no pill. */
+  .button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.15rem;
+    background: var(--ink);
+    color: var(--surface);
+    border-radius: var(--radius-sm);
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.2s ease;
+  }
+
+  .button:hover {
+    background: var(--accent-ink);
+    color: var(--on-accent);
+  }
+
+  :root[data-theme="dark"] .button:hover {
+    color: var(--surface);
+  }
+}

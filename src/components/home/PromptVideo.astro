@@ -1,0 +1,343 @@
+---
+/**
+ * Prompt → video hero.
+ *
+ * Shows a video the pipeline generated next to the exact prompt that produced it.
+ * Self-demonstrating: no caption is needed to understand what is being claimed.
+ *
+ * Motion answers a click. The loop plays only while it is on screen, and never
+ * starts under prefers-reduced-motion, where it stays a poster with a play control.
+ *
+ * Per-video figures ride on data attributes rather than being imported by the
+ * client script, so none of the video metadata reaches the browser as JS.
+ */
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+import { heroVideos } from "../../data/hero-videos";
+
+const posters = import.meta.glob<{ default: ImageMetadata }>(
+  "../../assets/posters/*.png",
+  { eager: true },
+);
+const posterFor = (id: string) => posters[`../../assets/posters/${id}.png`]!.default;
+
+const metaLine = (v: (typeof heroVideos)[number]) =>
+  `${v.shots} shots, ${Math.round(v.duration)} seconds of finished video, review score`;
+
+const first = heroVideos[0]!;
+---
+
+<figure class="pv">
+  <div class="pv__screen">
+    {
+      heroVideos.map((v, i) => (
+        <div class="pv__slide" data-slide={v.id} hidden={i !== 0}>
+          <Image
+            src={posterFor(v.id)}
+            alt=""
+            widths={[576, 1152]}
+            sizes="(min-width: 64rem) 46rem, 100vw"
+            loading={i === 0 ? "eager" : "lazy"}
+            class="pv__poster"
+          />
+          <video
+            class="pv__video"
+            muted
+            loop
+            playsinline
+            preload={i === 0 ? "metadata" : "none"}
+            width="1152"
+            height="648"
+            aria-label={`Animation generated from the prompt: ${v.prompt}`}
+          >
+            <source src={v.src} type="video/mp4" />
+          </video>
+        </div>
+      ))
+    }
+
+    <button class="pv__play" type="button" data-play hidden>
+      <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+        <path d="M8 5.5v13l11-6.5z"></path>
+      </svg>
+      Play
+    </button>
+  </div>
+
+  <figcaption class="pv__caption">
+    <blockquote class="pv__active">
+      <p data-activeprompt>{first.prompt}</p>
+    </blockquote>
+
+    <p class="pv__meta note">
+      <span data-metaline>{metaLine(first)}</span>{" "}
+      <span class="data" data-scoreline>{first.reviewScore}</span>. Nothing here was
+      drawn by hand. <a class="pv__more wipe" href="/work/video-engine">How it works</a>
+    </p>
+
+    <div class="pv__switch">
+      <span class="pv__switchlabel note">Try another prompt</span>
+      <ul class="pv__list" role="list">
+        {
+          heroVideos.map((v, i) => (
+            <li>
+              <button
+                type="button"
+                class="pv__chip"
+                data-prompt={v.id}
+                data-full={v.prompt}
+                data-meta={metaLine(v)}
+                data-score={v.reviewScore}
+                aria-pressed={i === 0 ? "true" : "false"}
+              >
+                {v.label}
+              </button>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </figcaption>
+</figure>
+
+<style>
+  .pv {
+    margin: 0;
+    display: grid;
+    gap: 1rem;
+  }
+
+  /* The videos render on black. Rather than fight that, the panel is a screen:
+     dark, inset, bordered. It reads as a device sitting on the page. */
+  .pv__screen {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .pv__slide {
+    position: absolute;
+    inset: 0;
+  }
+
+  .pv__slide[hidden] {
+    display: none;
+  }
+
+  .pv__poster,
+  .pv__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  /* The poster holds until the video is genuinely playing, so there is never a
+     flash of empty black while metadata loads. */
+  .pv__video {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .pv__slide.is-playing .pv__video {
+    opacity: 1;
+  }
+
+  .pv__play {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    translate: -50% -50%;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1rem;
+    border: 1px solid rgb(255 255 255 / 0.35);
+    border-radius: var(--radius-sm);
+    background: rgb(0 0 0 / 0.55);
+    color: #fff;
+    font: inherit;
+    font-size: var(--step--1);
+    cursor: pointer;
+  }
+
+  .pv__play[hidden] {
+    display: none;
+  }
+
+  .pv__play svg {
+    fill: currentColor;
+  }
+
+  .pv__caption {
+    display: grid;
+    gap: 0.85rem;
+  }
+
+  /* The prompt is the claim, so it gets real size and hanging quotes. */
+  .pv__active {
+    margin: 0;
+    border-left: 2px solid var(--accent);
+    padding-left: 0.9rem;
+  }
+
+  .pv__active p {
+    font-size: var(--step-1);
+    line-height: 1.4;
+    letter-spacing: -0.012em;
+    text-wrap: pretty;
+    max-width: 46ch;
+  }
+
+  .pv__active p::before {
+    content: "“";
+  }
+
+  .pv__active p::after {
+    content: "”";
+  }
+
+  .pv__meta {
+    max-width: 56ch;
+  }
+
+  .pv__switch {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 0.85rem;
+    padding-top: 0.4rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .pv__switchlabel {
+    flex: none;
+  }
+
+  .pv__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .pv__chip {
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink-muted);
+    font: inherit;
+    font-size: var(--step--1);
+    cursor: pointer;
+    transition:
+      color 0.2s ease,
+      border-color 0.2s ease,
+      background-color 0.2s ease;
+  }
+
+  .pv__chip:hover {
+    color: var(--ink);
+    border-color: var(--ink-faint);
+  }
+
+  .pv__chip[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+  }
+
+  .pv__more {
+    color: var(--accent-ink);
+    white-space: nowrap;
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>(".pv");
+
+  if (root) {
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+    const playBtn = root.querySelector<HTMLButtonElement>("[data-play]")!;
+    const metaLine = root.querySelector<HTMLElement>("[data-metaline]")!;
+    const activePrompt = root.querySelector<HTMLElement>("[data-activeprompt]")!;
+    const scoreLine = root.querySelector<HTMLElement>("[data-scoreline]")!;
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>("[data-prompt]")];
+    const slides = new Map(
+      [...root.querySelectorAll<HTMLElement>("[data-slide]")].map((el) => [
+        el.dataset.slide!,
+        el,
+      ]),
+    );
+
+    let current = buttons[0]!.dataset.prompt!;
+    let blocked = reduced.matches;
+
+    const videoOf = (id: string) =>
+      slides.get(id)!.querySelector<HTMLVideoElement>("video")!;
+
+    const tryPlay = (id: string) => {
+      if (blocked) return;
+      videoOf(id)
+        .play()
+        .then(
+          () => slides.get(id)!.classList.add("is-playing"),
+          () => {
+            // Autoplay refused (battery saver, some mobile modes). Offer the control.
+            playBtn.hidden = false;
+          },
+        );
+    };
+
+    const show = (id: string) => {
+      if (id === current) return;
+      videoOf(current).pause();
+      const prev = slides.get(current)!;
+      prev.hidden = true;
+      prev.classList.remove("is-playing");
+
+      current = id;
+      slides.get(id)!.hidden = false;
+
+      const btn = buttons.find((b) => b.dataset.prompt === id)!;
+      metaLine.textContent = btn.dataset.meta!;
+      activePrompt.textContent = btn.dataset.full!;
+      scoreLine.textContent = btn.dataset.score!;
+      for (const b of buttons) {
+        b.setAttribute("aria-pressed", String(b.dataset.prompt === id));
+      }
+      tryPlay(id);
+    };
+
+    for (const b of buttons) {
+      b.addEventListener("click", () => show(b.dataset.prompt!));
+    }
+
+    playBtn.addEventListener("click", () => {
+      blocked = false;
+      playBtn.hidden = true;
+      tryPlay(current);
+    });
+
+    if (blocked) {
+      playBtn.hidden = false;
+    } else {
+      // Keep a decoder running only while the hero is actually on screen.
+      new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) tryPlay(current);
+            else videoOf(current).pause();
+          }
+        },
+        { threshold: 0.35 },
+      ).observe(root);
+    }
+  }
+</script>

@@ -1,0 +1,86 @@
+---
+import { site } from "../../data/site";
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="container grid-12 footer__inner">
+    <div class="footer__cta">
+      <p class="footer__avail">{site.availability}.</p>
+      <a class="footer__mail wipe" href={`mailto:${site.email}`}>{site.email}</a>
+    </div>
+
+    <nav class="footer__links" aria-label="Elsewhere">
+      <a href={site.socials.github} rel="me noopener">GitHub</a>
+      <a href={site.socials.linkedin} rel="me noopener">LinkedIn</a>
+      <a href="/resume">Résumé</a>
+    </nav>
+
+    <p class="footer__legal note">
+      &copy; {year} {site.name}, {site.location}.
+    </p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-top: 1px solid var(--line);
+    margin-top: var(--space-section);
+    padding-block: clamp(2.5rem, 5vw, 4rem) 2rem;
+  }
+
+  .footer__inner {
+    row-gap: 2rem;
+    align-items: end;
+  }
+
+  .footer__cta {
+    grid-column: 1 / span 12;
+  }
+
+  .footer__avail {
+    color: var(--ink-muted);
+    margin-bottom: 0.5rem;
+  }
+
+  .footer__mail {
+    font-size: var(--step-3);
+    font-weight: 560;
+    letter-spacing: -0.02em;
+    font-variation-settings: "opsz" 48;
+    color: var(--ink);
+  }
+
+  .footer__links {
+    grid-column: 1 / span 12;
+    display: flex;
+    gap: 1.5rem;
+  }
+
+  .footer__links a {
+    font-size: var(--step--1);
+    color: var(--ink-muted);
+  }
+
+  .footer__links a:hover {
+    color: var(--ink);
+  }
+
+  .footer__legal {
+    grid-column: 1 / span 12;
+  }
+
+  @media (min-width: 52rem) {
+    .footer__cta {
+      grid-column: 1 / span 7;
+    }
+    .footer__links {
+      grid-column: 9 / span 4;
+      justify-content: flex-end;
+    }
+    .footer__legal {
+      grid-column: 1 / span 12;
+      margin-top: 1rem;
+    }
+  }
+</style>

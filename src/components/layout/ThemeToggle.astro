@@ -1,0 +1,92 @@
+---
+// Theme toggle. The initial theme is set by a blocking inline script in
+// Base.astro so there is never a flash of the wrong palette.
+---
+
+<button
+  type="button"
+  class="theme-toggle"
+  aria-label="Switch between light and dark theme"
+  data-theme-toggle
+>
+  <svg class="icon icon--sun" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="4.2"></circle>
+    <path
+      d="M12 2.4v2.4M12 19.2v2.4M4.36 4.36l1.7 1.7M17.94 17.94l1.7 1.7M2.4 12h2.4M19.2 12h2.4M4.36 19.64l1.7-1.7M17.94 6.06l1.7-1.7"
+    ></path>
+  </svg>
+  <svg class="icon icon--moon" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M20.5 14.4A8.6 8.6 0 1 1 9.6 3.5a7 7 0 0 0 10.9 10.9Z"></path>
+  </svg>
+</button>
+
+<style>
+  .theme-toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink-muted);
+    cursor: pointer;
+    transition:
+      color 0.25s ease,
+      border-color 0.25s ease,
+      background 0.25s ease;
+  }
+
+  .theme-toggle:hover {
+    color: var(--ink);
+    border-color: var(--line-strong);
+    background: var(--surface-2);
+  }
+
+  .icon {
+    grid-area: 1 / 1;
+    width: 1.05rem;
+    height: 1.05rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+  }
+
+  /* Show exactly one glyph: the action you would take, not the state you are in. */
+  .icon--moon {
+    display: none;
+  }
+
+  :global([data-theme="dark"]) .icon--sun {
+    display: none;
+  }
+
+  :global([data-theme="dark"]) .icon--moon {
+    display: block;
+  }
+</style>
+
+<script>
+  const root = document.documentElement;
+
+  for (const btn of document.querySelectorAll("[data-theme-toggle]")) {
+    btn.addEventListener("click", () => {
+      const next = root.dataset.theme === "dark" ? "light" : "dark";
+      root.dataset.theme = next;
+      try {
+        localStorage.setItem("theme", next);
+      } catch {
+        /* private mode; the toggle still works for this page view */
+      }
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) {
+        meta.setAttribute(
+          "content",
+          getComputedStyle(root).getPropertyValue("--surface").trim(),
+        );
+      }
+    });
+  }
+</script>

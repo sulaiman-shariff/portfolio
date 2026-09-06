@@ -1,0 +1,101 @@
+/* ---------------------------------------------------------------------------
+   Design tokens — "the bench notebook".
+
+   The subject is measured work: EEG trials in dB, benchmark runs, cost audits,
+   row counts. So the ground is cool graph-paper rather than warm cream, the ink
+   is a deep navy chosen as a colour, and the site's own accent is a quiet
+   instrument blue used for links only. Each project brings its own colour.
+
+   One authored variable per project (--accent-base); everything else derives.
+   --------------------------------------------------------------------------- */
+
+:root {
+  color-scheme: light;
+
+  --surface: #f4f6f3;
+  --surface-2: #eceeea;
+  --surface-3: #e2e6e1;
+  --ink: #0b1b33;
+  --ink-muted: #5b6773;
+  --ink-faint: #8a949e;
+  --line: #c6cdd4;
+  --line-strong: #a9b2bb;
+
+  /* Site accent: instrument blue. Case studies override --accent-base. */
+  --accent-base: #1b4fd8;
+  --on-accent: #ffffff;
+
+  --accent: var(--accent-base);
+  --accent-ink: color-mix(in oklab, var(--accent) 68%, black);
+  --accent-soft: color-mix(in oklab, var(--accent) 9%, var(--surface));
+  --accent-line: color-mix(in oklab, var(--accent) 34%, var(--surface));
+  --accent-glow: color-mix(in oklab, var(--accent) 22%, transparent);
+
+  /* One family. Optical size does the display/text split. */
+  --font-sans: "Bricolage Grotesque Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, monospace;
+
+  /* Fluid type scale, 320px → 1440px. Ratio ~1.2 at small, ~1.3 at large. */
+  --step--1: clamp(0.84rem, 0.81rem + 0.14vw, 0.93rem);
+  --step-0: clamp(1rem, 0.96rem + 0.2vw, 1.1rem);
+  --step-1: clamp(1.18rem, 1.1rem + 0.4vw, 1.42rem);
+  --step-2: clamp(1.4rem, 1.27rem + 0.66vw, 1.8rem);
+  --step-3: clamp(1.68rem, 1.45rem + 1.1vw, 2.35rem);
+  --step-4: clamp(2rem, 1.62rem + 1.9vw, 3.15rem);
+  --step-5: clamp(2.4rem, 1.78rem + 3.1vw, 4.25rem);
+  --step-6: clamp(2.85rem, 1.9rem + 4.75vw, 5.7rem);
+
+  /* Rhythm and grid */
+  --space-section: clamp(4.5rem, 3rem + 7vw, 10rem);
+  --gutter: clamp(1.25rem, 0.9rem + 1.8vw, 2.5rem);
+  --col-gap: clamp(1rem, 0.6rem + 1.6vw, 2rem);
+  --measure: 62ch;
+  --container: 84rem;
+
+  --radius-sm: 0.25rem;
+  --radius: 0.5rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Accent scoping.
+
+   Custom properties are substituted at the element that DECLARES them, then
+   inherit already-resolved. Redefining --accent-base on a descendant does NOT
+   recompute an --accent declared on :root, so the derivation is repeated here.
+   Put .accent-scope on any element that also sets --accent-base.
+   --------------------------------------------------------------------------- */
+.accent-scope {
+  --accent: var(--accent-base);
+  --accent-ink: color-mix(in oklab, var(--accent) 68%, black);
+  --accent-soft: color-mix(in oklab, var(--accent) 9%, var(--surface));
+  --accent-line: color-mix(in oklab, var(--accent) 34%, var(--surface));
+  --accent-glow: color-mix(in oklab, var(--accent) 22%, transparent);
+}
+
+:root[data-theme="dark"] .accent-scope {
+  --accent: var(--accent-dark, color-mix(in oklab, var(--accent-base) 78%, white));
+  --accent-ink: var(--accent);
+  --accent-soft: color-mix(in oklab, var(--accent) 15%, var(--surface));
+  --accent-line: color-mix(in oklab, var(--accent) 40%, var(--surface));
+  --accent-glow: color-mix(in oklab, var(--accent) 26%, transparent);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* The ink becomes the ground: navy, not near-black. */
+  --surface: #0b1b33;
+  --surface-2: #12243f;
+  --surface-3: #1a2f4d;
+  --ink: #eaeef2;
+  --ink-muted: #a7b2be;
+  --ink-faint: #7c8895;
+  --line: #24374f;
+  --line-strong: #34485f;
+
+  --accent: var(--accent-dark, color-mix(in oklab, var(--accent-base) 78%, white));
+  --accent-ink: var(--accent);
+  --accent-soft: color-mix(in oklab, var(--accent) 15%, var(--surface));
+  --accent-line: color-mix(in oklab, var(--accent) 40%, var(--surface));
+  --accent-glow: color-mix(in oklab, var(--accent) 26%, transparent);
+}
