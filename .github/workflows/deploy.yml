@@ -1,0 +1,102 @@
+name: Deploy
+
+# Pull requests get a preview URL; main goes to production.
+# Credentials live in repository secrets, never in the repo.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  check:
+    name: Build and check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Type-check
+        run: pnpm exec astro check --minimumSeverity error
+
+      - name: Build
+        run: pnpm build
+
+      # A portfolio that quietly grows to 50MB of screenshots stops loading
+      # well on the connections it most needs to work on.
+      - name: Check shipped media budget
+        run: |
+          BYTES=$(find dist -type f \( -name '*.png' -o -name '*.jpg' -o -name '*.webp' \
+                    -o -name '*.avif' -o -name '*.mp4' \) -printf '%s\n' | awk '{t+=$1} END {print t+0}')
+          MB=$(awk -v b="$BYTES" 'BEGIN {printf "%.1f", b/1048576}')
+          echo "Shipped media: ${MB} MB"
+          if [ "$BYTES" -gt 31457280 ]; then
+            echo "::error::Shipped media is ${MB} MB, over the 30 MB budget."
+            exit 1
+          fi
+
+  deploy:
+    name: Deploy to Vercel
+    needs: check
+    runs-on: ubuntu-latest
+    # Forked PRs cannot read secrets, so skip rather than fail confusingly.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install Vercel CLI
+        run: pnpm add -g vercel@latest
+
+      - name: Pull Vercel environment
+        run: |
+          TARGET=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
+          vercel pull --yes --environment="$TARGET" --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+          else
+            vercel build --token=${{ secrets.VERCEL_TOKEN }}
+          fi
+
+      - name: Deploy
+        id: deploy
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          else
+            URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "Deployed to $URL"
+          echo "### Deployed" >> "$GITHUB_STEP_SUMMARY"
+          echo "$URL" >> "$GITHUB_STEP_SUMMARY"

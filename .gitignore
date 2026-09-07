@@ -32,3 +32,6 @@ raw/
 # Playwright capture scratch
 .playwright/
 test-results/
+
+.vercel
+.env*
