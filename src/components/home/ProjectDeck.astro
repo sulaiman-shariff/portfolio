@@ -1,0 +1,674 @@
+---
+/**
+ * Project deck — the home hero.
+ *
+ * Six real project screens held as panes of glass in a shallow perspective
+ * stack, each edge-lit in its own accent. Back panes are tinted: the screenshot
+ * is blended in luminosity over an accent field, so wildly different products
+ * read as one instrument rack. Bringing a pane to the front resolves it back to
+ * full colour, and the front pane of the video engine plays the real generated
+ * animation rather than a still.
+ *
+ * The tint is doing honest work. These are six unrelated interfaces at six
+ * different aspect ratios; without it the hero is a pile of screenshots.
+ *
+ * Motion answers the pointer and answers a click. Nothing advances on its own.
+ * Under prefers-reduced-motion the rig is static, the video stays a poster, and
+ * the panes are still selectable.
+ */
+import { Image } from "astro:assets";
+import { getEntry } from "astro:content";
+import { heroVideos } from "../../data/hero-videos";
+
+interface DeckItem {
+  slug: string;
+  /** Overrides the tagline in the readout — the video engine shows its prompt. */
+  line?: string;
+  /** Label above the readout line. */
+  lineKind?: string;
+  video?: string;
+}
+
+const items: DeckItem[] = [
+  {
+    slug: "video-engine",
+    line: heroVideos[0]!.prompt,
+    lineKind: "Prompt",
+    video: heroVideos[0]!.src,
+  },
+  { slug: "aura" },
+  { slug: "edactly" },
+  { slug: "linkubit" },
+  { slug: "scraper" },
+  { slug: "murder-mystery" },
+];
+
+const panes = await Promise.all(
+  items.map(async (item) => {
+    const entry = await getEntry("work", item.slug);
+    if (!entry?.data.hero) throw new Error(`deck: ${item.slug} has no hero image`);
+    return { ...item, entry, data: entry.data, hero: entry.data.hero };
+  }),
+);
+
+const first = panes[0]!;
+const statOf = (p: (typeof panes)[number]) =>
+  p.data.headline ? `${p.data.headline.value}${p.data.headline.unit ?? ""}` : "";
+const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.context;
+---
+
+<div class="deck accent-scope" data-deck>
+  <div class="deck__stage" data-stage>
+    {
+      panes.map((p, i) => (
+        <article
+          class="pane accent-scope"
+          data-pane={p.slug}
+          data-index={i}
+          data-rel={i}
+          data-title={p.data.title}
+          data-line={p.line ?? p.data.tagline}
+          data-linekind={p.lineKind ?? "What it is"}
+          data-stat={statOf(p)}
+          data-statlabel={labelOf(p)}
+          data-href={`/work/${p.slug}`}
+          style={`--accent-base: ${p.data.accent.base}`}
+        >
+          <button
+            class="pane__hit"
+            type="button"
+            data-select={i}
+            tabindex={i === 0 ? 0 : -1}
+          >
+            <span class="u-visually-hidden">Bring {p.data.title} to the front</span>
+          </button>
+
+          <div class="pane__glass">
+            <Image
+              class="pane__shot"
+              src={p.hero.src}
+              alt=""
+              widths={[480, 720, 960]}
+              sizes="(min-width: 64rem) 34rem, 80vw"
+              loading={i === 0 ? "eager" : "lazy"}
+            />
+            {p.video && (
+              <video
+                class="pane__video"
+                muted
+                loop
+                playsinline
+                preload="none"
+                aria-label={`Animation generated from the prompt: ${p.line}`}
+              >
+                <source src={p.video} type="video/mp4" />
+              </video>
+            )}
+            <span class="pane__grid" aria-hidden="true" />
+            <span class="pane__scan" aria-hidden="true" />
+            <span class="pane__sheen" aria-hidden="true" />
+            <span class="pane__sweep" aria-hidden="true" />
+
+            <p class="pane__plate">
+              <span class="pane__name">{p.data.title}</span>
+              {statOf(p) && <span class="pane__stat data">{statOf(p)}</span>}
+            </p>
+          </div>
+        </article>
+      ))
+    }
+  </div>
+
+  <div class="deck__readout">
+    <p class="deck__kind note" data-kind>{first.lineKind ?? "What it is"}</p>
+    <p class="deck__line" data-line>{first.line ?? first.data.tagline}</p>
+    <p class="deck__foot">
+      {
+        statOf(first) && (
+          <span class="deck__stat">
+            <span class="data" data-stat>
+              {statOf(first)}
+            </span>
+            <span class="note" data-statlabel>
+              {labelOf(first)}
+            </span>
+          </span>
+        )
+      }
+      <a class="deck__link wipe" href={`/work/${first.slug}`} data-link>
+        Open <span data-linktitle>{first.data.title}</span>
+      </a>
+    </p>
+
+    <div class="deck__rail" role="group" aria-label="Choose a project">
+      {
+        panes.map((p, i) => (
+          <button
+            class="deck__dot accent-scope"
+            type="button"
+            data-select={i}
+            aria-pressed={i === 0 ? "true" : "false"}
+            style={`--accent-base: ${p.data.accent.base}`}
+          >
+            <span class="u-visually-hidden">{p.data.title}</span>
+          </button>
+        ))
+      }
+    </div>
+  </div>
+</div>
+
+<style>
+  .deck {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  /* --------------------------------------------------------------- stage */
+  .deck__stage {
+    position: relative;
+    aspect-ratio: 16 / 11;
+    perspective: 1500px;
+    perspective-origin: 30% 45%;
+    transform-style: preserve-3d;
+    /* Pointer position, -1..1, written by the script. */
+    --px: 0;
+    --py: 0;
+  }
+
+  @media (min-width: 64rem) {
+    .deck__stage {
+      aspect-ratio: 16 / 9;
+    }
+  }
+
+  /* --------------------------------------------------------------- panes */
+
+  /* Slot geometry is written out per depth rather than derived from a formula.
+     A linear ramp puts every pane behind the first one as a 60px sliver; what
+     the hero needs is four projects legible at once, which means the offsets
+     have to open up fast and then close. */
+  .pane {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 62%;
+    margin: 0;
+    transform-style: preserve-3d;
+    --x: 0%;
+    --y: 16%;
+    --z: 0px;
+    --ry: 0deg;
+    --depth: 0;
+
+    transform: translate3d(
+        calc(var(--x) + var(--px) * var(--depth) * -13px),
+        calc(var(--y) + var(--py) * var(--depth) * -9px),
+        var(--z)
+      )
+      rotateY(calc(var(--ry) + var(--px) * 8deg))
+      rotateX(calc(var(--py) * -5deg));
+
+    z-index: calc(20 - var(--depth));
+    transition:
+      transform 620ms cubic-bezier(0.16, 0.84, 0.28, 1),
+      opacity 480ms ease;
+  }
+
+  .pane[data-rel="0"] { --x: 0%; --y: 13%; --z: 0px; --ry: 0deg; --depth: 0; }
+  .pane[data-rel="1"] { --x: 46%; --y: 6%; --z: -150px; --ry: -9deg; --depth: 1; opacity: 0.94; }
+  .pane[data-rel="2"] { --x: 84%; --y: 0%; --z: -290px; --ry: -13deg; --depth: 2; opacity: 0.8; }
+  .pane[data-rel="3"] { --x: 118%; --y: -5%; --z: -410px; --ry: -16deg; --depth: 3; opacity: 0.6; }
+
+  /* Anything deeper parks off the back of the rack. It is still focusable
+     through the rail below, it just has nowhere legible to sit. */
+  .pane[data-rel="4"],
+  .pane[data-rel="5"],
+  .pane[data-rel="6"],
+  .pane[data-rel="7"],
+  .pane[data-rel="8"],
+  .pane[data-rel="9"] {
+    --x: 136%;
+    --y: -9%;
+    --z: -500px;
+    --ry: -18deg;
+    --depth: 4;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* The glass itself. Dark on purpose: the screenshots are six different
+     products, and a common ground is what lets them read as one rack. */
+  .pane__glass {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border-radius: 10px;
+    /* The accent field the screenshot is blended against. This must be the
+       glass's own background rather than a child: a luminosity blend mixes
+       with whatever is painted below it in the same stacking context, and a
+       separate layer behind the background never reaches the image. */
+    background: linear-gradient(
+      152deg,
+      color-mix(in oklab, var(--accent) 88%, white) 0%,
+      var(--accent) 46%,
+      color-mix(in oklab, var(--accent) 62%, #06080c) 100%
+    );
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--accent) 55%, transparent),
+      0 0 22px -4px color-mix(in oklab, var(--accent) 55%, transparent),
+      0 34px 60px -28px rgb(0 0 0 / 0.55);
+  }
+
+  .pane__glass :global(img),
+  .pane__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+  }
+
+  /* Tinted while it is behind: luminosity over an accent field turns a
+     screenshot into a readout. The front pane resolves back to full colour. */
+  .pane__glass :global(img) {
+    mix-blend-mode: luminosity;
+    opacity: 0.9;
+    transition:
+      opacity 520ms ease,
+      filter 520ms ease;
+    /* A luminosity blend keeps the backdrop's hue and takes the image's
+       lightness, so a bright screenshot washes the accent out and a dark one
+       swallows it. Compressing contrast pulls the whole image toward mid
+       lightness, which is where the accent's chroma actually reads. */
+    filter: grayscale(1) contrast(0.42) brightness(1.02);
+  }
+
+  .pane__video {
+    opacity: 0;
+    transition: opacity 420ms ease;
+  }
+
+  /* A graticule, not decoration: this is a bench instrument. */
+  .pane__grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, rgb(255 255 255 / 0.08) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(255 255 255 / 0.08) 1px, transparent 1px);
+    background-size: 44px 44px;
+    opacity: 0.65;
+    transition: opacity 520ms ease;
+  }
+
+  .pane__scan {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 0.22) 0 1px,
+      transparent 1px 3px
+    );
+    opacity: 0.5;
+    transition: opacity 520ms ease;
+  }
+
+  /* Specular highlight, tied to the pointer rather than to a timer. */
+  .pane__sheen {
+    position: absolute;
+    inset: -40%;
+    background: linear-gradient(
+      104deg,
+      transparent 38%,
+      rgb(255 255 255 / 0.1) 48%,
+      rgb(255 255 255 / 0.03) 56%,
+      transparent 64%
+    );
+    transform: translateX(calc(var(--px) * 26%));
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+
+  .pane__sweep {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 28%;
+    top: -30%;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      color-mix(in oklab, var(--accent) 40%, transparent),
+      transparent
+    );
+    mix-blend-mode: screen;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* --------------------------------------------------- the front pane */
+  .pane.is-front .pane__glass {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--accent) 85%, transparent),
+      0 0 34px -2px color-mix(in oklab, var(--accent) 65%, transparent),
+      0 46px 80px -34px rgb(0 0 0 / 0.6);
+  }
+
+  .pane.is-front .pane__glass :global(img) {
+    mix-blend-mode: normal;
+    opacity: 1;
+    filter: none;
+  }
+
+  .pane.is-front .pane__grid,
+  .pane.is-front .pane__scan {
+    opacity: 0.18;
+  }
+
+  .pane.is-playing .pane__video {
+    opacity: 1;
+  }
+
+  .pane.is-front .pane__sweep {
+    animation: sweep 5.5s cubic-bezier(0.6, 0, 0.4, 1) infinite;
+  }
+
+  @keyframes sweep {
+    0%,
+    62% {
+      top: -30%;
+      opacity: 0;
+    }
+    66% {
+      opacity: 0.55;
+    }
+    100% {
+      top: 104%;
+      opacity: 0;
+    }
+  }
+
+  /* --------------------------------------------------------------- plate */
+
+  /* Inside the glass, so it travels with its own pane instead of colliding
+     with the plate of the pane in front of it. */
+  .pane__plate {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0;
+    padding: 1.4rem 0.85rem 0.6rem;
+    background: linear-gradient(to top, rgb(4 6 8 / 0.9), rgb(4 6 8 / 0.45) 55%, transparent);
+    color: #f2f1ee;
+    z-index: 3;
+  }
+
+  .pane__name {
+    font-size: var(--step--1);
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+
+  .pane__stat {
+    font-size: var(--step--1);
+    color: color-mix(in oklab, var(--accent) 55%, white);
+  }
+
+  /* --------------------------------------------------------------- hit */
+  .pane__hit {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  .pane__hit:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+  }
+
+  .pane:not(.is-front):hover .pane__glass {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--accent) 80%, transparent),
+      0 0 30px -2px color-mix(in oklab, var(--accent) 62%, transparent),
+      0 34px 60px -28px rgb(0 0 0 / 0.55);
+  }
+
+  /* ------------------------------------------------------------ readout */
+  .deck__readout {
+    display: grid;
+    gap: 0.55rem;
+    max-width: 46ch;
+  }
+
+  .deck__line {
+    font-size: var(--step-0);
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+
+  .deck__foot {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.25rem;
+    margin-top: 0.2rem;
+  }
+
+  .deck__stat {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+  }
+
+  .deck__stat .data {
+    font-size: var(--step-1);
+    color: var(--accent-ink);
+  }
+
+  .deck__link {
+    font-weight: 500;
+  }
+
+  .deck__rail {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.35rem;
+  }
+
+  .deck__dot {
+    width: 2.25rem;
+    height: 0.3rem;
+    padding: 0;
+    border: 0;
+    border-radius: 99px;
+    background: var(--line-strong);
+    cursor: pointer;
+    transition:
+      background 260ms ease,
+      transform 260ms ease;
+  }
+
+  .deck__dot[aria-pressed="true"] {
+    background: var(--accent);
+    transform: scaleY(1.6);
+  }
+
+  .deck__dot:hover {
+    background: var(--accent);
+  }
+
+  /* --------------------------------------------------------- responsive */
+  @media (max-width: 52rem) {
+    .deck__stage {
+      aspect-ratio: 4 / 3;
+      perspective-origin: 58% 45%;
+    }
+    .pane {
+      width: 84%;
+    }
+    .pane__grid {
+      background-size: 30px 30px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pane {
+      transition: none;
+    }
+    .pane.is-front .pane__sweep {
+      animation: none;
+    }
+    .pane__sheen {
+      transform: none;
+    }
+  }
+</style>
+
+<script>
+  const deck = document.querySelector<HTMLElement>("[data-deck]");
+
+  if (deck) {
+    const root = deck;
+    const stage = deck.querySelector<HTMLElement>("[data-stage]")!;
+    const panes = Array.from(deck.querySelectorAll<HTMLElement>("[data-pane]"));
+    const dots = Array.from(deck.querySelectorAll<HTMLButtonElement>(".deck__dot"));
+    // Scoped to the readout on purpose: the panes carry data-line, data-stat and
+    // data-statlabel too, and an unscoped query matches the first pane instead.
+    const box = deck.querySelector<HTMLElement>(".deck__readout")!;
+    const readout = {
+      kind: box.querySelector<HTMLElement>("[data-kind]")!,
+      line: box.querySelector<HTMLElement>("[data-line]")!,
+      stat: box.querySelector<HTMLElement>("[data-stat]"),
+      statLabel: box.querySelector<HTMLElement>("[data-statlabel]"),
+      link: box.querySelector<HTMLAnchorElement>("[data-link]")!,
+      linkTitle: box.querySelector<HTMLElement>("[data-linktitle]")!,
+    };
+
+    const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const n = panes.length;
+    let active = 0;
+    let onScreen = true;
+
+    panes.forEach((p) => {
+      const v = p.querySelector("video");
+      if (!v) return;
+      p.classList.add("has-video");
+      // The poster stays visible until there is a frame to replace it with.
+      v.addEventListener("playing", () => p.classList.add("is-playing"));
+      v.addEventListener("pause", () => p.classList.remove("is-playing"));
+    });
+
+    const video = (p: HTMLElement) => p.querySelector<HTMLVideoElement>("video");
+
+    function playFront() {
+      panes.forEach((p, i) => {
+        const v = video(p);
+        if (!v) return;
+        if (i === active && onScreen && !calm.matches) {
+          if (v.preload === "none") v.preload = "auto";
+          v.play().catch(() => {});
+        } else {
+          v.pause();
+        }
+      });
+    }
+
+    function render() {
+      panes.forEach((p, i) => {
+        const rel = (i - active + n) % n;
+        p.dataset.rel = String(rel);
+        p.classList.toggle("is-front", rel === 0);
+        const hit = p.querySelector<HTMLButtonElement>(".pane__hit")!;
+        hit.tabIndex = rel === 0 ? 0 : -1;
+      });
+
+      const p = panes[active]!;
+      readout.kind.textContent = p.dataset.linekind ?? "";
+      readout.line.textContent = p.dataset.line ?? "";
+      if (readout.stat) readout.stat.textContent = p.dataset.stat ?? "";
+      if (readout.statLabel) readout.statLabel.textContent = p.dataset.statlabel ?? "";
+      readout.link.href = p.dataset.href ?? "#";
+      readout.linkTitle.textContent = p.dataset.title ?? "";
+      // The readout borrows the active project's colour.
+      root.style.setProperty(
+        "--accent-base",
+        getComputedStyle(p).getPropertyValue("--accent-base"),
+      );
+
+      dots.forEach((d, i) => d.setAttribute("aria-pressed", String(i === active)));
+      playFront();
+    }
+
+    function select(i: number) {
+      active = ((i % n) + n) % n;
+      render();
+    }
+
+    // A click on the front pane opens the project; on any other, brings it forward.
+    deck.querySelectorAll<HTMLButtonElement>("[data-select]").forEach((el) => {
+      el.addEventListener("click", () => {
+        const i = Number(el.dataset.select);
+        if (el.classList.contains("pane__hit") && i === active) {
+          window.location.href = panes[i]!.dataset.href!;
+          return;
+        }
+        select(i);
+      });
+    });
+
+    deck.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight") select(active + 1);
+      else if (e.key === "ArrowLeft") select(active - 1);
+      else return;
+      e.preventDefault();
+      panes[active]!.querySelector<HTMLButtonElement>(".pane__hit")!.focus();
+    });
+
+    // Pointer parallax. One rAF in flight at a time, and nothing under calm.
+    if (!calm.matches && window.matchMedia("(pointer: fine)").matches) {
+      let queued = false;
+      let px = 0;
+      let py = 0;
+
+      deck.addEventListener("pointermove", (e) => {
+        const r = stage.getBoundingClientRect();
+        px = ((e.clientX - r.left) / r.width) * 2 - 1;
+        py = ((e.clientY - r.top) / r.height) * 2 - 1;
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(() => {
+          stage.style.setProperty("--px", px.toFixed(3));
+          stage.style.setProperty("--py", py.toFixed(3));
+          queued = false;
+        });
+      });
+
+      deck.addEventListener("pointerleave", () => {
+        stage.style.setProperty("--px", "0");
+        stage.style.setProperty("--py", "0");
+      });
+    }
+
+    new IntersectionObserver(
+      (entries) => {
+        onScreen = entries[0]!.isIntersecting;
+        playFront();
+      },
+      { threshold: 0.25 },
+    ).observe(deck);
+
+    calm.addEventListener("change", playFront);
+    render();
+  }
+</script>

@@ -1,6 +1,10 @@
 /**
  * Hero videos.
  *
+ * Only the unit-circle loop ships: it is the one the home page's project deck
+ * plays. The other three entries are kept because their prompts and figures are
+ * the verified record of the same benchmark run, and the case study quotes them.
+ *
  * Every prompt below is VERBATIM from the pipeline's own run traces, cross-checked
  * against backend/benchmarks/topics.json and each run's `pipeline_start` event.
  * The hero's whole premise is that these are the real inputs — do not paraphrase them.
