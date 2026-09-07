@@ -1,6 +1,6 @@
 ---
 title: Notes Generator
-tagline: Turns a textbook chapter into notes you can actually revise from, with diagrams a vision model has checked.
+tagline: Turns a physics chapter into notes you can actually revise from, with diagrams a vision model has checked.
 summary: >-
   Reads a whole PDF chapter, plans it as one document, writes it as typed blocks
   rather than prose, generates and visually verifies its own diagrams, and
@@ -16,28 +16,38 @@ accent:
   base: "#b45309"
   onAccent: light
 hero:
-  src: ../../assets/work/notes-generator/typeset-page.png
-  alt: A typeset page of generated study notes on the Revolt of 1857, with a chapter summary panel and numbered sections.
+  src: ../../assets/work/notes-generator/chapter-open.png
+  alt: >-
+    Page one of generated notes on Current Electricity, with a chapter summary
+    panel, a definition callout and the formula I equals Q over t set in its own
+    panel.
   caption: >-
-    Page one of a generated set of notes. Typeset with Typst from a structured
-    document, not rendered from markdown.
+    The head of page one of a generated chapter. Typeset with Typst from a
+    structured document, not rendered from markdown.
 headline:
   value: "3"
-  label: attempts before a diagram is accepted
+  label: attempts before a section ships without its diagram
 status: published
 featured: false
 order: 60
 ---
 
 Summarising a chapter is easy and produces something useless: a shorter version
-of the textbook you already could not face reading. The target here was different
-— a page a student can revise from the night before an exam.
+of the textbook you already could not face reading. The target here was different,
+a page a student can revise from the night before an exam.
 
 That target drove almost every decision. Content is written as typed blocks
 rather than continuous prose: definitions, comparison tables, worked examples,
-warnings, timelines. No more than two paragraphs may run consecutively. Key terms
-are emphasised so the page can be skimmed. Equations are set large. A page of
-unbroken text has failed, however accurate it is.
+warnings, connections to things the student already knows. No more than two
+paragraphs may run consecutively. Key terms are emphasised so the page can be
+skimmed. Equations are set large and on their own. A page of unbroken text has
+failed, however accurate it is.
+
+<Figure
+  src={import("../../assets/work/notes-generator/typed-blocks.png")}
+  alt="A generated page on resistivity, with a definition callout, a worked comparison to copper and nichrome, and a table contrasting metals and semiconductors."
+  caption="One page, six block types. The table is doing the work a paragraph about metals and semiconductors would have done badly, and the copper-versus-nichrome comparison is there to attach the definition to something a student has seen."
+/>
 
 ## The diagram loop
 
@@ -47,26 +57,30 @@ restates the caption instead of adding to it.
 
 So generated figure code is statically checked, rendered, and then shown to a
 vision model that judges it against the section it belongs to. If it is rejected,
-the feedback goes back into a regeneration, up to three times. After that the
-document ships without that figure rather than with a bad one.
+the feedback goes back into a regeneration, up to three times.
 
 <Figure
-  src={import("../../assets/work/notes-generator/attempt-1.png")}
-  alt="First attempt at a diagram about the failure of the 1857 revolt, rejected by the reviewer."
-  caption="Attempt one, rejected. Delhi, Meerut and Bareilly are stacked on top of each other and the callout box covers the cluster it points at."
+  src={import("../../assets/work/notes-generator/diagram-accepted.png")}
+  alt="An accepted diagram showing a series circuit and a parallel circuit side by side, each with two resistors, a cell, and the equivalent-resistance formula beneath it."
+  caption="Accepted on the first pass. Two circuits, drawn to the same scale so they can be compared, with the rule for each written underneath."
 />
 
+The more interesting outcome is the other one. After three attempts the document
+ships without that figure rather than with a bad one, and in the physics chapter
+that is exactly what happened to section one: four sections planned a diagram,
+three got one, and the opening section gave up.
+
 <Figure
-  src={import("../../assets/work/notes-generator/attempt-3.png")}
-  alt="Third and accepted attempt at the same diagram, with clearer separation and readable labels."
-  caption="Attempt three, accepted. Same section, same prompt. The gain is incremental rather than dramatic: the cluster separates, the callouts stop overlapping the data, and the labels are legible. Without the loop, attempt one is what ships."
+  src={import("../../assets/work/notes-generator/diagram-rejected.png")}
+  alt="A rejected diagram of electron drift in a conductor, with electron markers colliding with the positive ion markers behind them and a subscript that failed to typeset."
+  caption="The best of the three attempts at that section, and still rejected. Electrons collide with the ions they are drifting past, and the drift velocity is labelled v_d because the subscript never typeset. The other two attempts crashed before rendering anything at all."
 />
 
 ## Half price, and safe to resume
 
 Generating thirty chapters one at a time is slow and costs full price. The
-Gemini Batch API is half price, so chapters are processed in waves — outline,
-then sections, then classification, then code generation and gating — which turns
+Gemini Batch API is half price, so chapters are processed in waves, outline, then
+sections, then classification, then code generation and gating, which turns
 thirty end-to-end pipelines into four or five provider round trips.
 
 Batching introduces a nastier failure mode than it removes. Batch creation is not
@@ -80,8 +94,8 @@ generation, so no document ships with holes in it.
 
 <Stats items={[
   { value: "$0.03", label: "per chapter", note: "$0.06 with diagrams, measured from traces" },
-  { value: "5", label: "chapters typeset end to end", note: "history and physics" },
-  { value: "45", label: "diagrams generated", note: "including rejected attempts" }
+  { value: "27", label: "diagram attempts across five runs", note: "23 of them rendered" },
+  { value: "2", label: "chapters carried end to end", note: "physics and history" }
 ]} />
 
 ## Why Typst
