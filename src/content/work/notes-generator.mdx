@@ -1,9 +1,12 @@
 ---
 title: Notes Generator
-tagline: Turns a PDF chapter into typeset revision notes with vision-checked diagrams.
+tagline: Turns a textbook chapter into notes you can actually revise from, with diagrams a vision model has checked.
 summary: >-
-  Reads a whole chapter, plans it as one document, writes it as typed blocks and typesets with Typst.
+  Reads a whole PDF chapter, plans it as one document, writes it as typed blocks
+  rather than prose, generates and visually verifies its own diagrams, and
+  typesets the result with Typst.
 role: Engineer
+org: Cognivo OPC
 context: personal
 dates:
   start: 2026-03-01
@@ -12,8 +15,80 @@ stack: [Python, Gemini, Typst, Manim]
 accent:
   base: "#b45309"
   onAccent: light
-status: draft
+hero:
+  src: ../../assets/work/notes-generator/typeset-page.png
+  alt: A typeset page of generated study notes on the Revolt of 1857, with a chapter summary panel and numbered sections.
+  caption: >-
+    Page one of a generated set of notes. Typeset with Typst from a structured
+    document, not rendered from markdown.
+headline:
+  value: "3"
+  label: attempts before a diagram is accepted
+status: published
+featured: false
 order: 60
 ---
 
-Case study in progress.
+Summarising a chapter is easy and produces something useless: a shorter version
+of the textbook you already could not face reading. The target here was different
+— a page a student can revise from the night before an exam.
+
+That target drove almost every decision. Content is written as typed blocks
+rather than continuous prose: definitions, comparison tables, worked examples,
+warnings, timelines. No more than two paragraphs may run consecutively. Key terms
+are emphasised so the page can be skimmed. Equations are set large. A page of
+unbroken text has failed, however accurate it is.
+
+## The diagram loop
+
+Roughly a third of sections carry a diagram, and diagrams are where generated
+material usually falls apart. Labels overlap. Arrows point at nothing. The figure
+restates the caption instead of adding to it.
+
+So generated figure code is statically checked, rendered, and then shown to a
+vision model that judges it against the section it belongs to. If it is rejected,
+the feedback goes back into a regeneration, up to three times. After that the
+document ships without that figure rather than with a bad one.
+
+<Figure
+  src={import("../../assets/work/notes-generator/attempt-1.png")}
+  alt="First attempt at a diagram about the failure of the 1857 revolt, rejected by the reviewer."
+  caption="Attempt one, rejected. Delhi, Meerut and Bareilly are stacked on top of each other and the callout box covers the cluster it points at."
+/>
+
+<Figure
+  src={import("../../assets/work/notes-generator/attempt-3.png")}
+  alt="Third and accepted attempt at the same diagram, with clearer separation and readable labels."
+  caption="Attempt three, accepted. Same section, same prompt. The gain is incremental rather than dramatic: the cluster separates, the callouts stop overlapping the data, and the labels are legible. Without the loop, attempt one is what ships."
+/>
+
+## Half price, and safe to resume
+
+Generating thirty chapters one at a time is slow and costs full price. The
+Gemini Batch API is half price, so chapters are processed in waves — outline,
+then sections, then classification, then code generation and gating — which turns
+thirty end-to-end pipelines into four or five provider round trips.
+
+Batching introduces a nastier failure mode than it removes. Batch creation is not
+idempotent, and a batch is billable the moment it is created, so a retry after a
+timeout can quietly bill twice. The fix is that every job gets a deterministic
+name and an intent row written before creation, duplicates are cancelled on
+discovery, and a budget cap is enforced before submission rather than after.
+
+Anything the batch does not return falls back to synchronous full-price
+generation, so no document ships with holes in it.
+
+<Stats items={[
+  { value: "$0.03", label: "per chapter", note: "$0.06 with diagrams, measured from traces" },
+  { value: "5", label: "chapters typeset end to end", note: "history and physics" },
+  { value: "45", label: "diagrams generated", note: "including rejected attempts" }
+]} />
+
+## Why Typst
+
+Markdown to PDF gives you a web page printed on A4. Typst is a real typesetting
+system, so the output has proper measure, hanging punctuation, and equations set
+at a size you can read across a desk. Content is stored as a structured document
+with stable section and block identifiers, which means a review pass can address
+one field of one block, and re-rendering costs nothing because the generation is
+already paid for.

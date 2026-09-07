@@ -49,6 +49,13 @@ const { src, alt, caption, width = "wide" } = Astro.props;
     border-radius: var(--radius);
     overflow: hidden;
     background: var(--surface-2);
+    display: grid;
+    place-items: center;
+  }
+
+  .fig__frame :global(img) {
+    max-width: 100%;
+    height: auto;
   }
 
   .fig figcaption {

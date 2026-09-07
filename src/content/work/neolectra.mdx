@@ -1,19 +1,66 @@
 ---
 title: Neolectra
-tagline: Estimates rooftop solar and rainwater potential from a photo and a location.
+tagline: Point at a roof on a map and find out what solar and rainwater harvesting would actually pay back.
 summary: >-
-  OpenCV extracts roof geometry, weather data drives the simulation, and the output is payback and ROI.
+  Rooftop geometry is extracted from imagery with OpenCV, run against local
+  weather and the real electricity tariff, and returned as a payback period
+  rather than a generation figure.
 role: Engineer
 context: hackathon
 dates:
   start: 2025-08-01
   label: "2025"
-stack: [Next.js, FastAPI, OpenCV, Three.js]
+stack: [Next.js, FastAPI, OpenCV, Three.js, Open-Meteo]
 accent:
   base: "#15803d"
   onAccent: light
-status: draft
+headline:
+  value: "2nd"
+  label: place, HACKNXS at MIT
+status: published
+featured: false
 order: 90
 ---
 
-Case study in progress.
+Every rooftop solar calculator I could find asks for your roof area in square
+metres. Almost nobody knows their roof area in square metres, so people guess,
+and the number that comes back is a guess wearing a decimal point.
+
+So this one asks for an address instead. It pulls the imagery, extracts the roof
+outline with OpenCV, and works out usable area from that. You correct it if it is
+wrong, which is a much easier task than producing the number from nothing.
+
+## What the estimate is made of
+
+Roof area is only the first input, and on its own it produces the useless answer:
+kilowatt-hours per year, a number nobody can act on.
+
+The rest of the chain is what makes it decidable. Local irradiance and rainfall
+come from Open-Meteo for the actual coordinates rather than a national average.
+Panel layout is fitted to the extracted polygon, because a roof with a water tank
+and a stairwell on it does not hold the panels its area suggests. Consumption is
+priced against BESCOM's slab tariff, which matters more than it sounds: Karnataka
+tariffs are stepped, so the units solar displaces are your *most* expensive ones,
+and a flat per-unit rate understates the saving badly.
+
+The output is a payback period in years and a monthly bill after installation.
+Those are the two numbers someone actually decides on.
+
+## Rainwater, because the roof is already measured
+
+The same polygon that sizes a solar array sizes a rainwater catchment, and the
+same rainfall series that feeds one feeds the other. Adding it cost almost
+nothing beyond a tank-sizing calculation, and in a city with the water situation
+Bangalore has, it is frequently the better answer of the two.
+
+## Where it stands
+
+Built at HACKNXS at MIT and placed second. It is a hackathon build and it shows:
+the roof extraction handles clean rectangular rooftops well and struggles with
+the dense, irregular, partly shaded ones that make up most of the city, which is
+exactly the case that matters. It is not deployed, so there are no screenshots of
+it running here rather than staged ones.
+
+The interesting piece to carry forward is not the computer vision. It is that
+pricing against a real stepped tariff changes the recommendation, and every
+consumer-facing calculator I looked at gets that part wrong.

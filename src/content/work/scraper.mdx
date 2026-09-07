@@ -2,18 +2,85 @@
 title: People Research Platform
 tagline: A research agent on the Cloudflare edge that returns people, each with a quote you can check.
 summary: >-
-  Worker, Workflow, Durable Object coordinator and Container, with a versioned NDJSON event protocol.
+  Worker, Workflow, Durable Object coordinator and Container, with a versioned
+  NDJSON event protocol and every result carrying the sentence it came from.
 role: Engineer
 context: personal
 dates:
   start: 2026-07-01
   label: "2026"
-stack: [Cloudflare Workers, D1, Durable Objects, Python]
+stack: [Cloudflare Workers, Workflows, Durable Objects, D1, Python]
 accent:
   base: "#4338ca"
   onAccent: light
-status: draft
+hero:
+  src: ../../assets/work/scraper/ui-seed-fields.png
+  alt: >-
+    The query form, with a natural-language research prompt, seed URLs and
+    country filters on the left and the run's stage list on the right.
+  caption: >-
+    You describe who you want in a sentence. The column on the right is every
+    stage the run moves through, streamed as it happens, so a slow run is
+    legible instead of just slow.
+headline:
+  value: "0 → 11"
+  label: people found on the benchmark query
+status: published
+featured: false
 order: 70
 ---
 
-Case study in progress.
+You describe the people you want in a sentence. The system searches, reads what
+it finds, and hands back a list where every person carries the sentence that
+justified including them.
+
+The quote is the whole point. A research tool that returns a name and a
+confidence score is asking you to trust it, and there is no way to check. A tool
+that returns the sentence it read is asking you to check, which takes about two
+seconds per row.
+
+## Why it is spread across four runtimes
+
+A Worker takes the request and owns the API. A Workflow runs the research, so a
+run survives a restart and resumes at the last completed step rather than
+starting again. A Durable Object coordinates the run and is the single place
+event ordering is decided. A Container runs the Python extraction, which needs
+libraries that do not exist on the Workers runtime.
+
+That is four runtimes for one feature, which is more moving parts than I would
+choose if it were free. It buys resumability and a single ordering authority. A
+long research run that dies twenty minutes in and starts over is not a tool
+anyone uses twice.
+
+Everything between them is one versioned NDJSON event stream. Version it from
+the first line and a schema change is a migration; leave it unversioned and it is
+an outage.
+
+## The run that returned nothing
+
+The benchmark query returned zero people in 266 seconds. Not an error, not a
+crash. It ran to completion and found nobody, which is a worse failure than
+crashing because nothing tells you it happened. Across 31 benchmark runs, 13
+came back empty.
+
+The cause was not one thing. The planner was writing queries too narrow to match
+any real page. The extraction step was discarding candidates on a schema
+mismatch. Nothing reported either, because both were behaving as written.
+
+<Stats items={[
+  { value: "0 → 11", label: "people found", note: "8 of them qualified" },
+  { value: "266s → 149s", label: "wall clock on the same query" },
+  { value: "33-107s → 20-27s", label: "planning latency", note: "and far less variance" }
+]} />
+
+The planner now writes broader queries and widens them when a pass comes back
+thin. Extraction keeps partial records instead of discarding them. And an empty
+result is now reported as an empty result, with the queries that produced it.
+
+## What I have not measured
+
+125 of 125 Worker tests pass, which tells you the plumbing holds and nothing
+about whether the answers are right. I have not measured precision or recall
+against a labelled set, so I cannot tell you how many of those 8 qualified people
+actually qualify. The quotes make that checkable by hand, which is not the same
+as having checked it.

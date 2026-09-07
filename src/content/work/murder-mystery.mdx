@@ -1,8 +1,9 @@
 ---
 title: Murder Mystery
-tagline: A competitive live-event game judged by an LLM in natural language.
+tagline: A competitive live-event game where an LLM reads your accusation and decides if you got it right.
 summary: >-
-  Teams investigate three cases and an LLM adjudicates their accusations, with scoring and a leaderboard.
+  Teams investigate three cases and write their accusation in plain English. A
+  model adjudicates it, scores it, and the leaderboard updates live.
 role: Engineer
 context: hackathon
 dates:
@@ -12,8 +13,59 @@ stack: [Next.js, TypeScript, Supabase, Gemini]
 accent:
   base: "#9f1239"
   onAccent: light
-status: draft
+hero:
+  src: ../../assets/work/murder-mystery/landing.png
+  alt: The game's landing screen, styled as a confidential case file with a sign-in form.
+  caption: >-
+    The landing screen. The case-file treatment is doing recruitment work, not
+    decoration: it tells a room full of students what kind of evening this is
+    before they read a word.
+headline:
+  value: "3"
+  label: cases, judged in natural language
+links:
+  live: https://murder-mystery-atria.vercel.app
+status: published
+featured: false
 order: 80
 ---
 
-Case study in progress.
+I built this for a campus event. Teams work through three cases, and instead of
+picking a suspect from a dropdown they write out who did it and why. A model
+reads that and decides whether they solved it.
+
+The multiple-choice version is much easier to build and much less fun. Picking
+from four names is a guess with a 25% floor. Writing "it was the caterer, because
+the receipt puts him in the kitchen at the time the clock stopped" is the actual
+game, and the only way to grade it is to read it.
+
+## Grading free text at a live event
+
+Judging by model is the interesting part and the risky part. Two teams giving the
+same answer in different words must score the same, or you have a room of
+students who are correctly annoyed with you.
+
+So the judge does not score freely. It gets the case's ground truth, the specific
+elements an accusation must contain, and a rubric, and returns a structured
+verdict against those elements rather than a general impression. Naming the right
+person for the wrong reason does not score the same as naming them for the right
+one.
+
+The other constraint was latency. This runs in a room with people waiting, so a
+verdict has to come back in seconds. Gemini Flash Lite is fast enough for that,
+and the structured rubric means the small model is doing a checking job rather
+than an open-ended reasoning one.
+
+## Things a live event punishes
+
+A game night is an unusually harsh test environment. Everyone arrives at once, so
+the sign-in path takes its entire load in about ninety seconds. Nobody reloads
+politely. And the leaderboard, which is most of the reason the room stays engaged, is
+wrong in front of forty people at once or not at all.
+
+The build is Next.js with 17 API routes over Supabase, with row-level security
+so a team cannot read another team's progress by changing an id, and Playwright
+tests covering the paths that would be embarrassing to break in front of an
+audience: sign-in, submitting an accusation, and the leaderboard ordering.
+
+It is still live at [murder-mystery-atria.vercel.app](https://murder-mystery-atria.vercel.app).

@@ -10,6 +10,9 @@ interface Props {
 
 const { entry, next } = Astro.props;
 const d = entry.data;
+// Only a genuinely portrait hero needs a height cap; a near-square screenshot
+// should still fill the frame rather than float in the middle of it.
+const heroPortrait = !!d.hero && d.hero.src.height / d.hero.src.width > 1.15;
 ---
 
 <Base title={d.title} description={d.summary} themeColor={d.accent.base}>
@@ -33,6 +36,20 @@ const d = entry.data;
           <dd>{d.stack.join(", ")}</dd>
         </div>
         {
+          d.headline && (
+            <div>
+              <dt class="note">Result</dt>
+              <dd class="case__result">
+                <span class="case__resultvalue">
+                  {d.headline.value}
+                  {d.headline.unit && <span class="case__resultunit">{d.headline.unit}</span>}
+                </span>
+                <span class="note">{d.headline.label}</span>
+              </dd>
+            </div>
+          )
+        }
+        {
           (d.links.live || d.links.repo) && (
             <div>
               <dt class="note">Links</dt>
@@ -49,7 +66,7 @@ const d = entry.data;
     {
       d.hero && (
         <figure class="case__hero container">
-          <div class="case__heroframe">
+          <div class:list={["case__heroframe", heroPortrait && "case__heroframe--portrait"]}>
             <Image
               src={d.hero.src}
               alt={d.hero.alt}
@@ -125,6 +142,26 @@ const d = entry.data;
     grid-column: span 2;
   }
 
+  /* The headline number, repeated from the index so a case study without a
+     hero image still opens on something concrete. */
+  .case__result {
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .case__resultvalue {
+    font-family: var(--font-mono);
+    font-size: var(--step-1);
+    font-feature-settings: "tnum" 1;
+    color: var(--accent-ink);
+    line-height: 1.1;
+  }
+
+  .case__resultunit {
+    font-size: var(--step--1);
+    margin-left: 0.15em;
+  }
+
   .case__org {
     color: var(--ink-muted);
   }
@@ -147,6 +184,22 @@ const d = entry.data;
     border-radius: var(--radius);
     overflow: hidden;
     background: var(--surface-2);
+    display: grid;
+    place-items: center;
+  }
+
+  /* A portrait hero (a typeset page, a phone screen) is narrower than the
+     frame. Centre it and cap its height so it reads as a matted document
+     rather than a landscape image that failed to load on one side. */
+  .case__heroframe :global(img) {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .case__heroframe--portrait :global(img) {
+    max-height: 42rem;
+    width: auto;
+    object-fit: contain;
   }
 
   .case__hero figcaption {

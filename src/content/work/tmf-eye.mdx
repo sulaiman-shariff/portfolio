@@ -1,9 +1,12 @@
 ---
 title: TMF Eye
-tagline: A regulated document platform for clinical trials, with a tamper-evident audit trail.
+tagline: Clinical trial documents, where every change has to be provable years later.
 summary: >-
-  Hash-chained audit events, KMS-backed e-signatures, and hierarchical retrieval over the TMF Reference Model.
+  Hash-chained audit events, KMS-backed electronic signatures, and hierarchical
+  retrieval over the TMF Reference Model, built to survive an inspection rather
+  than a demo.
 role: Full-Stack & AI Engineering Intern
+org: Datatreasures
 context: client work
 dates:
   start: 2025-10-01
@@ -12,8 +15,57 @@ stack: [FastAPI, PostgreSQL, LlamaIndex, Pinecone, Azure OpenAI, GCP Cloud Run]
 accent:
   base: "#2563EB"
   onAccent: light
-status: draft
+status: published
+featured: false
 order: 100
 ---
 
-Case study in progress.
+A Trial Master File is the evidence that a clinical trial was run the way it said
+it would be. Regulators inspect it, sometimes years after the trial ends, and the
+question they ask is not "what does the document say" but "can you prove nobody
+changed it".
+
+That reframes almost everything. Most document software optimises for the current
+state of a file. This has to optimise for the provable history of one.
+
+## Audit events that cannot be quietly edited
+
+Every action writes an audit event, and each event carries a hash of the one
+before it. Change or remove any event in the middle and every hash after it stops
+matching, so tampering is detectable rather than merely discouraged by
+permissions.
+
+Permissions alone are not enough here, because the person you have to convince is
+an inspector who does not trust your permissions. A chain they can verify
+independently is a different kind of claim.
+
+Electronic signatures are backed by KMS-held keys, so the signing key is never in
+the application's memory and a compromised app server cannot forge a signature
+retroactively.
+
+## Retrieval over a reference model, not a pile of files
+
+The TMF Reference Model is a hierarchy: zones contain sections, sections contain
+artifacts. Flattening all of it into one vector index throws away the structure
+that makes the question answerable, and produces confident answers drawn from the
+wrong zone.
+
+So retrieval walks the hierarchy: narrow to the relevant zone and section first,
+then search within it. Fewer candidates, and every candidate is from somewhere
+that could plausibly hold the answer.
+
+The part I would argue for hardest is that this was measured. Retrieval changes
+were evaluated with MRR and Recall@K against a fixed question set, so "the new
+chunking is better" was a claim with a number behind it rather than a feeling
+after trying four queries. On a system where being wrong is a regulatory problem,
+an unmeasured retrieval change is not an improvement, it is a rumour.
+
+## Deployment
+
+FastAPI and Postgres on GCP Cloud Run, with document storage separate from
+metadata so the audit chain and the files have independent durability guarantees.
+
+There are no screenshots on this page. The system holds another company's data
+and the screens that would be worth showing are the ones with real trial content
+in them, so showing nothing is the right answer. The engineering above is the
+part worth reading anyway.
