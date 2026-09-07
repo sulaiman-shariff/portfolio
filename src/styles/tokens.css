@@ -12,17 +12,18 @@
 :root {
   color-scheme: light;
 
-  --surface: #f4f6f3;
-  --surface-2: #eceeea;
-  --surface-3: #e2e6e1;
-  --ink: #0b1b33;
-  --ink-muted: #5b6773;
-  --ink-faint: #8a949e;
-  --line: #c6cdd4;
-  --line-strong: #a9b2bb;
+  --surface: #f6f5f2;
+  --surface-2: #efeeea;
+  --surface-3: #e6e4df;
+  --ink: #1c1a17;
+  --ink-muted: #67635c;
+  --ink-faint: #918d86;
+  --line: #dcd9d3;
+  --line-strong: #c1bdb6;
 
-  /* Site accent: instrument blue. Case studies override --accent-base. */
-  --accent-base: #1b4fd8;
+  /* Site accent, used for links and the default project colour. Kept quiet on
+     purpose: each case study overrides --accent-base with its own. */
+  --accent-base: #2f6d5a;
   --on-accent: #ffffff;
 
   --accent: var(--accent-base);
@@ -83,15 +84,17 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  /* The ink becomes the ground: navy, not near-black. */
-  --surface: #0b1b33;
-  --surface-2: #12243f;
-  --surface-3: #1a2f4d;
-  --ink: #eaeef2;
-  --ink-muted: #a7b2be;
-  --ink-faint: #7c8895;
-  --line: #24374f;
-  --line-strong: #34485f;
+  /* Warm dark, so light and dark read as the same document at two times of
+     day. Deliberately almost neutral: the only real colour on a page should
+     be the project's own accent. */
+  --surface: #1a1917;
+  --surface-2: #222120;
+  --surface-3: #2b2927;
+  --ink: #efedea;
+  --ink-muted: #a5a29d;
+  --ink-faint: #7d7a75;
+  --line: #302e2b;
+  --line-strong: #423f3b;
 
   --accent: var(--accent-dark, color-mix(in oklab, var(--accent-base) 78%, white));
   --accent-ink: var(--accent);
