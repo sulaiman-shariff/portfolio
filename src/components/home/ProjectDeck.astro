@@ -74,14 +74,9 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
           data-href={`/work/${p.slug}`}
           style={`--accent-base: ${p.data.accent.base}`}
         >
-          <button
-            class="pane__hit"
-            type="button"
-            data-select={i}
-            tabindex={i === 0 ? 0 : -1}
-          >
-            <span class="u-visually-hidden">Bring {p.data.title} to the front</span>
-          </button>
+          <a class="pane__hit" href={`/work/${p.slug}`}>
+            <span class="u-visually-hidden">Open {p.data.title}</span>
+          </a>
 
           <div class="pane__glass">
             <Image
@@ -154,6 +149,16 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
           </button>
         ))
       }
+
+      {/* Content that moves on its own needs a way to stop it. */}
+      <button class="deck__hold" type="button" data-hold hidden>
+        <svg viewBox="0 0 12 12" aria-hidden="true" width="10" height="10">
+          <rect class="deck__holdpause" x="2" y="1.5" width="3" height="9" />
+          <rect class="deck__holdpause" x="7" y="1.5" width="3" height="9" />
+          <path class="deck__holdplay" d="M3 1.5v9l7-4.5z" />
+        </svg>
+        <span data-holdlabel>Pause</span>
+      </button>
     </div>
   </div>
 </div>
@@ -162,6 +167,7 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
   .deck {
     display: grid;
     gap: 1.5rem;
+    --dwell: 6s;
   }
 
   /* --------------------------------------------------------------- stage */
@@ -421,15 +427,14 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
   }
 
   /* --------------------------------------------------------------- hit */
+  /* The whole pane is the link. A visitor who wants a project clicks the
+     project, wherever it currently sits in the rack. */
   .pane__hit {
     position: absolute;
     inset: 0;
-    z-index: 2;
-    border: 0;
-    padding: 0;
-    background: transparent;
+    z-index: 4;
     border-radius: 10px;
-    cursor: pointer;
+    text-decoration: none;
   }
 
   .pane__hit:focus-visible {
@@ -482,11 +487,14 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
 
   .deck__rail {
     display: flex;
+    align-items: center;
     gap: 0.5rem;
     margin-top: 0.35rem;
   }
 
   .deck__dot {
+    position: relative;
+    overflow: hidden;
     width: 2.25rem;
     height: 0.3rem;
     padding: 0;
@@ -500,12 +508,74 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
   }
 
   .deck__dot[aria-pressed="true"] {
-    background: var(--accent);
+    background: color-mix(in oklab, var(--accent) 26%, var(--line-strong));
     transform: scaleY(1.6);
+  }
+
+  /* The active dot fills over the dwell, so the switch is expected rather than
+     startling. With autoplay off it is simply full. */
+  .deck__dot[aria-pressed="true"]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--accent);
+    transform-origin: left center;
+  }
+
+  .deck.is-auto .deck__dot[aria-pressed="true"]::after {
+    animation: dwell var(--dwell, 6s) linear forwards;
+  }
+
+  .deck.is-held .deck__dot[aria-pressed="true"]::after {
+    animation-play-state: paused;
+  }
+
+  @keyframes dwell {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
   }
 
   .deck__dot:hover {
     background: var(--accent);
+  }
+
+  .deck__hold {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-left: 0.5rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--ink-faint);
+    font: inherit;
+    font-size: var(--step--1);
+    cursor: pointer;
+    align-self: center;
+  }
+
+  .deck__hold:hover {
+    color: var(--ink);
+  }
+
+  .deck__hold svg {
+    fill: currentColor;
+  }
+
+  .deck__hold .deck__holdplay {
+    display: none;
+  }
+
+  .deck.is-held .deck__hold .deck__holdplay {
+    display: block;
+  }
+
+  .deck.is-held .deck__hold .deck__holdpause {
+    display: none;
   }
 
   /* --------------------------------------------------------- responsive */
@@ -589,8 +659,12 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
         const rel = (i - active + n) % n;
         p.dataset.rel = String(rel);
         p.classList.toggle("is-front", rel === 0);
-        const hit = p.querySelector<HTMLButtonElement>(".pane__hit")!;
-        hit.tabIndex = rel === 0 ? 0 : -1;
+          // Panes parked off the back of the rack are invisible; keep them out
+        // of the tab order rather than focusing something nobody can see.
+        const hit = p.querySelector<HTMLAnchorElement>(".pane__hit")!;
+        const parked = rel > 3;
+        hit.tabIndex = parked ? -1 : 0;
+        hit.setAttribute("aria-hidden", String(parked));
       });
 
       const p = panes[active]!;
@@ -613,18 +687,61 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
     function select(i: number) {
       active = ((i % n) + n) % n;
       render();
+      restart();
     }
 
-    // A click on the front pane opens the project; on any other, brings it forward.
-    deck.querySelectorAll<HTMLButtonElement>("[data-select]").forEach((el) => {
-      el.addEventListener("click", () => {
-        const i = Number(el.dataset.select);
-        if (el.classList.contains("pane__hit") && i === active) {
-          window.location.href = panes[i]!.dataset.href!;
-          return;
-        }
-        select(i);
+    // ------------------------------------------------------------ autoplay
+    const DWELL = 6000;
+    let timer: number | undefined;
+    let held = false; // the visitor pressed pause
+    let hover = false; // pointer or focus is inside the deck
+
+    const running = () => !held && !hover && onScreen && !document.hidden && !calm.matches;
+
+    function restart() {
+      window.clearTimeout(timer);
+      root.classList.toggle("is-auto", running());
+      root.classList.toggle("is-held", !running());
+      if (!running()) return;
+      timer = window.setTimeout(() => {
+        active = (active + 1) % n;
+        render();
+        restart();
+      }, DWELL);
+    }
+
+    const hold = root.querySelector<HTMLButtonElement>("[data-hold]");
+    const holdLabel = root.querySelector<HTMLElement>("[data-holdlabel]");
+    if (hold && !calm.matches) {
+      hold.hidden = false;
+      hold.addEventListener("click", () => {
+        held = !held;
+        if (holdLabel) holdLabel.textContent = held ? "Play" : "Pause";
+        restart();
       });
+    }
+
+    // Reaching for a pane should not have it swap out from under the cursor.
+    const enter = () => {
+      hover = true;
+      restart();
+    };
+    const leave = () => {
+      hover = false;
+      restart();
+    };
+    root.addEventListener("pointerenter", enter);
+    root.addEventListener("pointerleave", leave);
+    root.addEventListener("focusin", enter);
+    root.addEventListener("focusout", (e) => {
+      if (!root.contains(e.relatedTarget as Node | null)) leave();
+    });
+    document.addEventListener("visibilitychange", () => restart());
+
+    // The panes are links straight to their projects, so the rail is what
+    // selects. Choosing by hand restarts the dwell rather than ending it.
+    deck.querySelectorAll<HTMLButtonElement>("[data-select]").forEach((el) => {
+      el.addEventListener("click", () => select(Number(el.dataset.select)));
     });
 
     deck.addEventListener("keydown", (e) => {
@@ -632,7 +749,7 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
       else if (e.key === "ArrowLeft") select(active - 1);
       else return;
       e.preventDefault();
-      panes[active]!.querySelector<HTMLButtonElement>(".pane__hit")!.focus();
+      dots[active]!.focus();
     });
 
     // Pointer parallax. One rAF in flight at a time, and nothing under calm.
@@ -664,11 +781,18 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
       (entries) => {
         onScreen = entries[0]!.isIntersecting;
         playFront();
+        restart();
       },
       { threshold: 0.25 },
     ).observe(deck);
 
-    calm.addEventListener("change", playFront);
+    calm.addEventListener("change", () => {
+      playFront();
+      if (hold) hold.hidden = calm.matches;
+      restart();
+    });
+
     render();
+    restart();
   }
 </script>

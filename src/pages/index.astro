@@ -88,7 +88,10 @@ const featured = await featuredWork();
     margin: 0;
   }
 
-  @media (min-width: 64rem) {
+  /* Not 64rem: at around 1030px a five-column text block is barely six
+     characters wide at this display size, and the headline becomes a tower.
+     Below 74rem the hero stays stacked. */
+  @media (min-width: 74rem) {
     .hero__text {
       grid-column: 1 / span 5;
       padding-top: 0.5rem;

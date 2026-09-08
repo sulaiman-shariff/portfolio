@@ -22,8 +22,8 @@ hero:
     handed off to a human; the right-hand panel tracks what the conversation has
     established and what is still unknown.
 headline:
-  value: "1,300+"
-  label: end-to-end scenarios against real PostgreSQL
+  value: "4 → 1"
+  label: WhatsApp, Instagram, Messenger and email, one customer
 links:
   repo: https://github.com/sulaiman-shariff/Linkubit
 status: published
@@ -50,9 +50,9 @@ test derived from the live schema fails the build when a new table appears
 without a policy.
 
 <Stats items={[
-  { value: "34", label: "Alembic migrations", note: "every tenant table policy-checked" },
-  { value: "1,300+", label: "end-to-end scenarios", note: "run against real PostgreSQL, not mocks" },
-  { value: "8", label: "Terraform modules", note: "one estate, no console clicking" }
+  { value: "73", label: "tenant-scoped tables", note: "of 74; the policy list is derived from the live schema, not hand-written" },
+  { value: "2", label: "isolation defects that test caught", note: "both invisible to schema inspection" },
+  { value: "1,300+", label: "end-to-end scenarios", note: "run against real PostgreSQL, not mocks" }
 ]} />
 
 That test caught two defects I would never have found by reading code. The first:
