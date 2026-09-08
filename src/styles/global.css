@@ -219,3 +219,36 @@
   white-space: nowrap;
   border: 0;
 }
+
+/* ---------------------------------------------------------------------------
+   Cross-document view transitions.
+
+   One at-rule, no router and no client JS: same-origin navigations cross-fade,
+   and an element carrying the same view-transition-name on both pages morphs
+   between them. The home page hands the clicked project's own image this name
+   just before it navigates, so the card becomes the case study's hero rather
+   than the page cutting to black and redrawing.
+
+   Browsers without support navigate normally.
+   --------------------------------------------------------------------------- */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-group(work-hero) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.16, 0.84, 0.28, 1);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 260ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

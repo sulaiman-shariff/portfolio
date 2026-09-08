@@ -442,23 +442,34 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
     outline-offset: 4px;
   }
 
-  .pane:hover {
+  /* Driven by the script, not by :hover — see the note in the script. */
+  .deck__stage.is-over {
     cursor: pointer;
   }
 
-  .pane:hover .pane__glass {
-    transform: translateY(-4px);
-  }
-
   .pane__glass {
-    transition: transform 240ms ease;
+    transition:
+      transform 240ms ease,
+      box-shadow 240ms ease;
   }
 
-  .pane:not(.is-front):hover .pane__glass {
+  .pane.is-hot .pane__glass {
+    transform: translateY(-5px);
     box-shadow:
-      0 0 0 1px color-mix(in oklab, var(--accent) 80%, transparent),
-      0 0 30px -2px color-mix(in oklab, var(--accent) 62%, transparent),
-      0 34px 60px -28px rgb(0 0 0 / 0.55);
+      0 0 0 1px color-mix(in oklab, var(--accent) 92%, transparent),
+      0 0 38px -2px color-mix(in oklab, var(--accent) 72%, transparent),
+      0 40px 70px -30px rgb(0 0 0 / 0.6);
+  }
+
+  /* A pane you are pointing at stops pretending to be a hologram. */
+  .pane.is-hot .pane__glass :global(img) {
+    opacity: 1;
+    filter: grayscale(0.35) contrast(1) brightness(1);
+  }
+
+  .pane.is-hot .pane__grid,
+  .pane.is-hot .pane__scan {
+    opacity: 0.2;
   }
 
   /* ------------------------------------------------------------ readout */
@@ -582,11 +593,11 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
     display: none;
   }
 
-  .deck.is-held .deck__hold .deck__holdplay {
+  .deck.is-hold .deck__hold .deck__holdplay {
     display: block;
   }
 
-  .deck.is-held .deck__hold .deck__holdpause {
+  .deck.is-hold .deck__hold .deck__holdpause {
     display: none;
   }
 
@@ -728,6 +739,7 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
       hold.hidden = false;
       hold.addEventListener("click", () => {
         held = !held;
+        root.classList.toggle("is-hold", held);
         if (holdLabel) holdLabel.textContent = held ? "Play" : "Pause";
         restart();
       });
@@ -742,18 +754,32 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
       restart();
     };
 
-    // Reaching for a pane should not have it swap out from under the cursor —
-    // but only a pane. Hovering the whole deck stopped the rack for anyone
-    // whose cursor happened to rest on that half of the page, which is most of
-    // the reason it looked like it never advanced. And this is gated on a real
-    // hovering pointer: on a touchscreen `pointerenter` fires on tap and the
-    // matching `pointerleave` never comes, so the rack stopped for good after
-    // the first tap.
+    // :hover is no use here for the same reason the links were unclickable —
+    // the browser's hit region for a 3D-transformed pane is not where it
+    // paints, so a pane behind the front one never matched :hover, never
+    // showed a pointer cursor, and never paused the rack. The cursor is
+    // reaching for a card that keeps moving, which is what made it feel
+    // clunky. So the hot pane is worked out from the same boxes the click
+    // uses, and hover, cursor and pause all follow from that one answer.
+    let hot: HTMLElement | null = null;
+
+    function setHot(p: HTMLElement | null) {
+      if (p === hot) return;
+      hot?.classList.remove("is-hot");
+      p?.classList.add("is-hot");
+      hot = p;
+      stage.classList.toggle("is-over", !!p);
+      if (!!p !== hover) {
+        hover = !!p;
+        restart();
+      }
+    }
+
     if (window.matchMedia("(hover: hover)").matches) {
-      panes.forEach((p) => {
-        p.addEventListener("pointerenter", enter);
-        p.addEventListener("pointerleave", leave);
+      stage.addEventListener("pointermove", (e) => {
+        setHot(paneAt(e.clientX, e.clientY));
       });
+      stage.addEventListener("pointerleave", () => setHot(null));
     }
 
     root.addEventListener("focusin", enter);
@@ -769,21 +795,31 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
     // routes the click itself, front pane first, using the boxes the panes
     // actually occupy on screen. The anchors stay for keyboard, middle-click
     // and the status bar.
-    stage.addEventListener("click", (e) => {
-      if ((e.target as Element).closest(".pane__hit")) return; // browser got it
-      const { clientX: x, clientY: y } = e;
+    /** The pane a point lands on: front-most first, parked ones skipped. */
+    function paneAt(x: number, y: number): HTMLElement | null {
       const byDepth = [...panes].sort(
         (a, b) => Number(a.dataset.rel) - Number(b.dataset.rel),
       );
       for (const p of byDepth) {
-        if (Number(p.dataset.rel) > 3) continue; // parked off the back
+        if (Number(p.dataset.rel) > 3) continue;
         const r = p.getBoundingClientRect();
-        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
-          window.location.href = p.dataset.href!;
-          return;
-        }
+        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return p;
       }
+      return null;
+    }
+
+    stage.addEventListener("click", (e) => {
+      if ((e.target as Element).closest(".pane__hit")) return; // browser got it
+      const p = paneAt(e.clientX, e.clientY);
+      if (p) go(p);
     });
+
+    /** Hand the pane's own image to the next page, then navigate. */
+    function go(p: HTMLElement) {
+      const img = p.querySelector<HTMLElement>(".pane__shot");
+      if (img) img.style.viewTransitionName = "work-hero";
+      window.location.href = p.dataset.href!;
+    }
 
     // The panes are links straight to their projects, so the rail is what
     // selects. Choosing by hand restarts the dwell rather than ending it.

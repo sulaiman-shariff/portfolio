@@ -194,6 +194,9 @@ const heroPortrait = !!d.hero && d.hero.src.height / d.hero.src.width > 1.15;
   .case__heroframe :global(img) {
     max-width: 100%;
     height: auto;
+    /* The other half of the morph: the home page gives the clicked card's
+       image this same name on its way out. */
+    view-transition-name: work-hero;
   }
 
   .case__heroframe--portrait :global(img) {
