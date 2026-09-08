@@ -517,36 +517,61 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
 
   .deck__dot {
     position: relative;
-    overflow: hidden;
     width: 2.25rem;
-    height: 0.3rem;
+    /* The visible bar is drawn by ::before. The button itself is sized for a
+       thumb: an 8px-tall control is not tappable. */
+    height: 2.75rem;
     padding: 0;
     border: 0;
-    border-radius: 99px;
-    background: var(--line-strong);
+    background: none;
     cursor: pointer;
-    transition:
-      background 260ms ease,
-      transform 260ms ease;
   }
 
-  .deck__dot[aria-pressed="true"] {
-    background: color-mix(in oklab, var(--accent) 26%, var(--line-strong));
-    transform: scaleY(1.6);
-  }
-
-  /* The active dot fills over the dwell, so the switch is expected rather than
-     startling. With autoplay off it is simply full. */
-  .deck__dot[aria-pressed="true"]::after {
+  .deck__dot::before,
+  .deck__dot::after {
     content: "";
     position: absolute;
-    inset: 0;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 0.28rem;
+    margin-top: -0.14rem;
+    border-radius: 99px;
+    transition:
+      background 260ms ease,
+      height 200ms ease,
+      margin-top 200ms ease;
+  }
+
+  .deck__dot::before {
+    background: var(--line-strong);
+  }
+
+  .deck__dot:hover::before {
+    background: var(--accent);
+  }
+
+  .deck__dot[aria-pressed="true"]::before {
+    background: color-mix(in oklab, var(--accent) 26%, var(--line-strong));
+    height: 0.45rem;
+    margin-top: -0.225rem;
+  }
+
+  /* The fill that runs over the dwell, so the next switch is expected. */
+  .deck__dot::after {
     background: var(--accent);
     transform-origin: left center;
+    transform: scaleX(0);
+  }
+
+  .deck__dot[aria-pressed="true"]::after {
+    transform: scaleX(1);
+    height: 0.45rem;
+    margin-top: -0.225rem;
   }
 
   .deck.is-auto .deck__dot[aria-pressed="true"]::after {
-    animation: dwell var(--dwell, 6s) linear forwards;
+    animation: dwell var(--dwell, 2s) linear forwards;
   }
 
   .deck.is-held .deck__dot[aria-pressed="true"]::after {
@@ -562,16 +587,13 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
     }
   }
 
-  .deck__dot:hover {
-    background: var(--accent);
-  }
-
   .deck__hold {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    margin-left: 0.5rem;
-    padding: 0;
+    margin-left: 0.35rem;
+    min-height: 2.75rem;
+    padding: 0 0.5rem;
     border: 0;
     background: transparent;
     color: var(--ink-faint);
@@ -602,16 +624,24 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
   }
 
   /* --------------------------------------------------------- responsive */
+  /* On a phone only the front card and the edge of the next one can fit, so
+     stop pretending otherwise and give the front card the room. */
   @media (max-width: 52rem) {
     .deck__stage {
       aspect-ratio: 4 / 3;
-      perspective-origin: 58% 45%;
+      perspective-origin: 50% 45%;
     }
     .pane {
-      width: 84%;
+      width: 96%;
+    }
+    .pane[data-rel="0"] {
+      --y: 8%;
     }
     .pane__grid {
       background-size: 30px 30px;
+    }
+    .deck__readout {
+      max-width: none;
     }
   }
 

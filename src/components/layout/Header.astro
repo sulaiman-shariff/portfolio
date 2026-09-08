@@ -77,4 +77,29 @@ const isActive = (href: string) =>
     color: var(--ink);
     border-bottom-color: var(--ink);
   }
+
+  /* On a phone the name wrapped to two lines and every control was under the
+     24px minimum for a touch target. Nothing here is a hamburger: four links
+     fit, they just need to be tappable. */
+  @media (max-width: 30rem) {
+    .header__inner {
+      gap: 0.7rem;
+      min-height: 3.25rem;
+    }
+
+    .header__brand {
+      white-space: nowrap;
+      font-size: var(--step--1);
+      padding-block: 0.7rem;
+    }
+
+    .header__nav {
+      gap: 0.8rem;
+    }
+
+    .header__link {
+      font-size: 0.8rem;
+      padding-block: 0.7rem;
+    }
+  }
 </style>

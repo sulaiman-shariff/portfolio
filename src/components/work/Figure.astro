@@ -1,5 +1,5 @@
 ---
-import { Image } from "astro:assets";
+import { Image, getImage } from "astro:assets";
 import type { ImageMetadata } from "astro";
 
 interface Props {
@@ -11,10 +11,15 @@ interface Props {
 }
 
 const { src, alt, caption, width = "wide" } = Astro.props;
+
+// Several of these are whole A4 pages and dense product screens. At the width
+// of a phone their text is unreadable, so the figure links to a large version
+// the browser can pinch-zoom. No JS, and it works the same on desktop.
+const full = await getImage({ src, width: Math.min(src.width, 1600), format: "webp" });
 ---
 
 <figure class:list={["fig", `fig--${width}`]}>
-  <div class="fig__frame">
+  <a class="fig__frame" href={full.src} aria-label={`View ${alt} at full size`}>
     <Image
       src={src}
       alt={alt}
@@ -23,7 +28,7 @@ const { src, alt, caption, width = "wide" } = Astro.props;
       loading="lazy"
       decoding="async"
     />
-  </div>
+  </a>
   {caption && <figcaption class="note">{caption}</figcaption>}
 </figure>
 
@@ -45,6 +50,8 @@ const { src, alt, caption, width = "wide" } = Astro.props;
   }
 
   .fig__frame {
+    display: block;
+    cursor: zoom-in;
     border: 1px solid var(--line);
     border-radius: var(--radius);
     overflow: hidden;

@@ -62,6 +62,11 @@ const year = new Date().getFullYear();
     color: var(--ink-muted);
   }
 
+  /* Standalone navigation, not prose links, so they get a real target. */
+  .footer__links a {
+    padding-block: 0.6rem;
+  }
+
   .footer__links a:hover {
     color: var(--ink);
   }

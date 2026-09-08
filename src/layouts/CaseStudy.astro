@@ -1,5 +1,5 @@
 ---
-import { Image } from "astro:assets";
+import { Image, getImage } from "astro:assets";
 import Base from "./Base.astro";
 import { dateLabel, accentStyle, type Work } from "../lib/work";
 
@@ -13,6 +13,15 @@ const d = entry.data;
 // Only a genuinely portrait hero needs a height cap; a near-square screenshot
 // should still fill the frame rather than float in the middle of it.
 const heroPortrait = !!d.hero && d.hero.src.height / d.hero.src.width > 1.15;
+// A phone-width hero of a document page is unreadable; link to a large version
+// the browser can pinch-zoom.
+const heroFull = d.hero
+  ? await getImage({
+      src: d.hero.src,
+      width: Math.min(d.hero.src.width, 1600),
+      format: "webp",
+    })
+  : null;
 ---
 
 <Base title={d.title} description={d.summary} themeColor={d.accent.base}>
@@ -66,7 +75,11 @@ const heroPortrait = !!d.hero && d.hero.src.height / d.hero.src.width > 1.15;
     {
       d.hero && (
         <figure class="case__hero container">
-          <div class:list={["case__heroframe", heroPortrait && "case__heroframe--portrait"]}>
+          <a
+            class:list={["case__heroframe", heroPortrait && "case__heroframe--portrait"]}
+            href={heroFull!.src}
+            aria-label={`View ${d.hero.alt} at full size`}
+          >
             <Image
               src={d.hero.src}
               alt={d.hero.alt}
@@ -75,7 +88,7 @@ const heroPortrait = !!d.hero && d.hero.src.height / d.hero.src.width > 1.15;
               loading="eager"
               fetchpriority="high"
             />
-          </div>
+          </a>
           {d.hero.caption && <figcaption class="note">{d.hero.caption}</figcaption>}
         </figure>
       )
@@ -180,6 +193,8 @@ const heroPortrait = !!d.hero && d.hero.src.height / d.hero.src.width > 1.15;
   }
 
   .case__heroframe {
+    display: grid;
+    cursor: zoom-in;
     border: 1px solid var(--line);
     border-radius: var(--radius);
     overflow: hidden;
