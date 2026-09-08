@@ -442,6 +442,18 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
     outline-offset: 4px;
   }
 
+  .pane:hover {
+    cursor: pointer;
+  }
+
+  .pane:hover .pane__glass {
+    transform: translateY(-4px);
+  }
+
+  .pane__glass {
+    transition: transform 240ms ease;
+  }
+
   .pane:not(.is-front):hover .pane__glass {
     box-shadow:
       0 0 0 1px color-mix(in oklab, var(--accent) 80%, transparent),
@@ -721,7 +733,6 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
       });
     }
 
-    // Reaching for a pane should not have it swap out from under the cursor.
     const enter = () => {
       hover = true;
       restart();
@@ -730,8 +741,21 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
       hover = false;
       restart();
     };
-    root.addEventListener("pointerenter", enter);
-    root.addEventListener("pointerleave", leave);
+
+    // Reaching for a pane should not have it swap out from under the cursor —
+    // but only a pane. Hovering the whole deck stopped the rack for anyone
+    // whose cursor happened to rest on that half of the page, which is most of
+    // the reason it looked like it never advanced. And this is gated on a real
+    // hovering pointer: on a touchscreen `pointerenter` fires on tap and the
+    // matching `pointerleave` never comes, so the rack stopped for good after
+    // the first tap.
+    if (window.matchMedia("(hover: hover)").matches) {
+      panes.forEach((p) => {
+        p.addEventListener("pointerenter", enter);
+        p.addEventListener("pointerleave", leave);
+      });
+    }
+
     root.addEventListener("focusin", enter);
     root.addEventListener("focusout", (e) => {
       if (!root.contains(e.relatedTarget as Node | null)) leave();
