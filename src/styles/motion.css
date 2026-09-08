@@ -90,9 +90,6 @@ a:hover .wipe {
   }
 }
 
-/* View transitions: a project's figure morphs into its case-study hero.
-   Answers the visitor's click, so it is not decoration. */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 260ms;
-}
+/* View transitions live in global.css, next to the rest of the navigation
+   timing. This file used to set a 260ms root duration of its own, which quietly
+   competed with them. */

@@ -223,11 +223,16 @@
 /* ---------------------------------------------------------------------------
    Cross-document view transitions.
 
-   One at-rule, no router and no client JS: same-origin navigations cross-fade,
-   and an element carrying the same view-transition-name on both pages morphs
-   between them. The home page hands the clicked project's own image this name
-   just before it navigates, so the card becomes the case study's hero rather
-   than the page cutting to black and redrawing.
+   One at-rule, no router and no client JS: every same-origin navigation on the
+   site cross-fades, and an element carrying the same view-transition-name on
+   both pages morphs between them. The home page hands the clicked project's
+   own image this name just before it navigates, so the card becomes the case
+   study's hero rather than the page cutting to black and redrawing.
+
+   Timing is deliberately unhurried. The first pass ran at 260ms on a curve
+   that spends most of its travel in the first third, which arrives before the
+   eye has followed it and reads as a cut rather than a movement. These
+   durations are long enough to be seen and the curve eases at both ends.
 
    Browsers without support navigate normally.
    --------------------------------------------------------------------------- */
@@ -235,14 +240,42 @@
   navigation: auto;
 }
 
-::view-transition-group(work-hero) {
-  animation-duration: 420ms;
-  animation-timing-function: cubic-bezier(0.16, 0.84, 0.28, 1);
+/* Eases in and out, rather than firing off the line and coasting. */
+::view-transition-group(*) {
+  animation-duration: 520ms;
+  animation-timing-function: cubic-bezier(0.62, 0.05, 0.2, 1);
 }
 
-::view-transition-old(root),
+/* The card growing into the case-study hero is the one thing worth watching,
+   so it gets the longest travel on the page. */
+::view-transition-group(work-hero),
+::view-transition-image-pair(work-hero),
+::view-transition-old(work-hero),
+::view-transition-new(work-hero) {
+  animation-duration: 700ms;
+  animation-timing-function: cubic-bezier(0.62, 0.05, 0.2, 1);
+}
+
+/* The page under it. Both start together and the incoming half takes longer,
+   so the two overlap instead of leaving a pale gap in the middle. */
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+::view-transition-old(root) {
+  animation: vt-fade-out 300ms cubic-bezier(0.4, 0, 0.7, 1) both;
+}
+
 ::view-transition-new(root) {
-  animation-duration: 260ms;
+  animation: vt-fade-in 520ms cubic-bezier(0.2, 0, 0.2, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
