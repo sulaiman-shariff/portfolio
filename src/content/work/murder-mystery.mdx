@@ -14,12 +14,13 @@ accent:
   base: "#9f1239"
   onAccent: light
 hero:
-  src: ../../assets/work/murder-mystery/landing.png
-  alt: The game's landing screen, styled as a confidential case file with a sign-in form.
+  src: ../../assets/work/murder-mystery/suspects.png
+  alt: >-
+    The suspects tab of a live case, listing six people at a hotel with a line
+    each on their connection to the victim.
   caption: >-
-    The landing screen. The case-file treatment is doing recruitment work, not
-    decoration: it tells a room full of students what kind of evening this is
-    before they read a word.
+    Case one, mid-investigation. Six suspects, each with the thread that ties
+    them to a private lender found dead in room 314.
 headline:
   value: "3"
   label: cases, judged in natural language
@@ -51,6 +52,12 @@ verdict against those elements rather than a general impression. Naming the righ
 person for the wrong reason does not score the same as naming them for the right
 one.
 
+<Figure
+  src={import("../../assets/work/murder-mystery/accusation.png")}
+  alt="The accusation dialog, with free-text fields for who did it and why, and a checklist of evidence."
+  caption="The accusation, which is the whole argument for building it this way. Who and why are free text — 'a name, or how you'd describe them', 'in your own words'. The evidence checklist is what stops a good story from passing as a solved case."
+/>
+
 The other constraint was latency. This runs in a room with people waiting, so a
 verdict has to come back in seconds. Gemini Flash Lite is fast enough for that,
 and the structured rubric means the small model is doing a checking job rather
@@ -67,5 +74,11 @@ The build is Next.js with 17 API routes over Supabase, with row-level security
 so a team cannot read another team's progress by changing an id, and Playwright
 tests covering the paths that would be embarrassing to break in front of an
 audience: sign-in, submitting an accusation, and the leaderboard ordering.
+
+<Figure
+  src={import("../../assets/work/murder-mystery/landing.png")}
+  alt="The game's landing screen, styled as a confidential case file with a sign-in form."
+  caption="The way in. The case-file treatment is doing recruitment work rather than decoration: it tells a room full of students what kind of evening this is before they have read a word."
+/>
 
 It is still live at [murder-mystery-atria.vercel.app](https://murder-mystery-atria.vercel.app).
