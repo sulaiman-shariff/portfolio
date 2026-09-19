@@ -2,17 +2,18 @@
 /**
  * Project deck — the home hero.
  *
- * Six real project screens held as panes of glass in a shallow perspective
+ * Five real project screens held as panes of glass in a shallow perspective
  * stack, each edge-lit in its own accent. Back panes are tinted: the screenshot
  * is blended in luminosity over an accent field, so wildly different products
  * read as one instrument rack. Bringing a pane to the front resolves it back to
  * full colour, and the front pane of the video engine plays the real generated
  * animation rather than a still.
  *
- * The tint is doing honest work. These are six unrelated interfaces at six
+ * The tint is doing honest work. These are five unrelated interfaces at five
  * different aspect ratios; without it the hero is a pile of screenshots.
  *
- * Motion answers the pointer and answers a click. Nothing advances on its own.
+ * The rack advances on its own every two seconds and pauses under the pointer;
+ * a click on any pane goes to its case study.
  * Under prefers-reduced-motion the rig is static, the video stays a poster, and
  * the panes are still selectable.
  */
@@ -38,7 +39,6 @@ const items: DeckItem[] = [
   },
   { slug: "aura" },
   { slug: "edactly" },
-  { slug: "linkubit" },
   { slug: "scraper" },
   { slug: "murder-mystery" },
 ];
@@ -243,7 +243,7 @@ const labelOf = (p: (typeof panes)[number]) => p.data.headline?.label ?? p.data.
     pointer-events: none;
   }
 
-  /* The glass itself. Dark on purpose: the screenshots are six different
+  /* The glass itself. Dark on purpose: the screenshots are five different
      products, and a common ground is what lets them read as one rack. */
   .pane__glass {
     position: relative;
