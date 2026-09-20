@@ -1,0 +1,62 @@
+---
+title: ZoodleMe
+tagline: A story app for kids, and the project where I actually learned what an API was.
+summary: >-
+  LLM story generation, TTS narration and an image pipeline, with
+  multi-provider payments in production, run on the same serverless AWS
+  estate as Edactly.
+role: Founding Engineer
+org: Cognivo OPC
+context: product
+dates:
+  start: 2024-11-01
+  label: Nov 2024 — present
+stack: [FastAPI, AWS Lambda, PostgreSQL, Cognito, Terraform, Stripe, Razorpay]
+accent:
+  base: "#db2777"
+  onAccent: light
+headline:
+  value: "1,600"
+  label: users, on a backend I wrote while learning what a backend was
+status: published
+featured: false
+order: 25
+---
+
+This is the project I have worked on the longest, and also the one where I was
+worst at my job when I started.
+
+The first version of the backend was written with a ChatGPT tab open next to the
+editor, genuinely learning what an API was while building one. AWS in particular
+felt hostile in a way I did not yet have the vocabulary to argue with. Deploying
+a single Lambda function took the better part of a week the first time, mostly
+spent finding the one permission I had forgotten in a policy I did not
+understand. The same deploy takes under ten minutes now, not because Lambda got
+easier but because I stopped treating infrastructure as something to be feared
+into working and started reading the documentation properly.
+
+## What it actually does
+
+ZoodleMe generates stories for children with an LLM, narrates them with
+text-to-speech, and illustrates them through an image pipeline, so a child gets
+something closer to a finished picture book than a wall of generated text.
+Payments run through four providers in production — Stripe, Razorpay, and Apple
+and Google in-app purchases — because a children's app has to support however a
+parent's phone happens to be set up, not the payment method that is easiest to
+integrate first.
+
+## The estate it grew up on
+
+ZoodleMe and Edactly share a single serverless AWS platform: FastAPI on Lambda,
+RDS PostgreSQL, Cognito for auth, all seven Lambdas and the API Gateway defined
+in Terraform with OIDC deploys. ZoodleMe came first, and a lot of what makes that
+shared estate solid now exists because it broke on ZoodleMe first and got fixed
+before Edactly had to hit the same thing.
+
+## Where it stands
+
+1,600 users, real payments processed across all four providers, and a backend
+that has been rewritten enough times that almost none of that first
+ChatGPT-assisted version is still running. That gap, between the code that
+taught me what an API was and the code running today, is the clearest evidence I
+have of how much has actually changed since I started.
